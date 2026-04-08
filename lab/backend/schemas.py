@@ -1,34 +1,32 @@
 from pydantic import BaseModel
 from typing import List, Optional
+from uuid import UUID 
 
-#campos base que comparten todos los objetos del inventario
+#campos base de los items
 class InventoryBase(BaseModel):
-    item_name: str #nombre del objeto para el catalogo
-    quantity: int #unidades que posee el jugador
+    item_name: str
+    quantity: int
 
-#modelo para la creacion de objetos (el cliente no envia el id)
 class InventoryCreate(InventoryBase):
     pass
 
-#modelo completo que incluye datos de la base de datos
 class Inventory(InventoryBase):
-    id: int #identificador unico en la tabla
-    owner_id: int #relacion con el usuario dueño
+    id: UUID 
+    owner_id: UUID 
     class Config:
-        from_attributes = True #para que pydantic lea modelos de sqlalchemy
+        from_attributes = True
 
-#campos base de la identidad del jugador
 class UserBase(BaseModel):
-    steam_id: str #identificador unico de la plataforma steam
-    username: str #alias del jugador en el juego
+    steam_id: str
+    username: str
+    credits: Optional[int] = 100
+    is_admin: Optional[bool] = False
 
-#modelo para registrar nuevos usuarios
 class UserCreate(UserBase):
     pass
 
-#modelo de usuario que incluye su lista de items
 class User(UserBase):
-    id: int 
-    items: List[Inventory] = [] #lista vinculada por owner_id
+    id: UUID 
+    items: List[Inventory] = []
     class Config:
         from_attributes = True

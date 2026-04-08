@@ -21,5 +21,23 @@ services:
     depends_on:
       - db
 
+  proxy:
+    image: mitmproxy/mitmproxy
+    container_name: tfg_proxy
+    #esto hace que los logs salgan al momento
+    environment:
+      - PYTHONUNBUFFERED=1
+      - MITMPROXY_SET_WEB_AUTH_TOKEN=paula123
+    volumes:
+      - ../proxy:/home/mitmproxy/scripts
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    #usamos el comando mas directo
+    command: >
+      mitmweb --web-host 0.0.0.0 
+      --web-port 8081 
+      --scripts /home/mitmproxy/scripts/addon.py
+
 volumes:
   db_data:

@@ -1,4 +1,4 @@
-# 📅 07-04-2026
+#  07-04-2026
 
 ## ## Qué se ha investigado/realizado
 - **Despliegue de Orquestación Docker**: Configuración exitosa de `docker-compose.yml` para levantar un ecosistema de dos servicios (FastAPI + PostgreSQL).

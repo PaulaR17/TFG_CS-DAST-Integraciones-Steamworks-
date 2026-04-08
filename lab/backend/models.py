@@ -1,23 +1,26 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, String, ForeignKey, Integer, Boolean
 from sqlalchemy.orm import relationship
-from database import Base
+from sqlalchemy.dialects.postgresql import UUID
+import uuid
+from database import Base # Importamos Base directamente desde database
 
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    steam_id = Column(String, unique=True, index=True) #aqui va el ID real de Steam
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    steam_id = Column(String, unique=True, index=True)
     username = Column(String)
+    credits = Column(Integer, default=100)
+    is_admin = Column(Boolean, default=False)
     
-    # Relación: 1 usuario tiene muchos objetos
     items = relationship("Inventory", back_populates="owner")
 
 class Inventory(Base):
     __tablename__ = "inventory"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     item_name = Column(String)
     quantity = Column(Integer, default=1)
-    owner_id = Column(Integer, ForeignKey("users.id"))
+    owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
 
     owner = relationship("User", back_populates="items")

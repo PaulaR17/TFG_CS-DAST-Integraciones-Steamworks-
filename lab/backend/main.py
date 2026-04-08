@@ -1,32 +1,45 @@
+import httpx #libreria para que la api hable con steam
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
-import models, schemas
-from database import engine, get_db
+import models, schemas, database
+import uuid #para los ids profesionales tipo uuid
 
-#genera las tablas fisicas en postgres si no existen
-models.Base.metadata.create_all(bind=engine)
+#crea las tablas con el formato uuid para evitar ids predecibles [cite: 39]
+models.Base.metadata.create_all(bind=database.engine)
 app = FastAPI()
-@app.post("/users/", response_model=schemas.User)
-def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    #para registrar un usuario nuevo en el laboratorio
-    db_user = models.User(steam_id=user.steam_id, username=user.username)
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
 
-@app.post("/inventory/{user_id}/items/", response_model=schemas.Inventory)
-def add_item_to_user(user_id: int, item: schemas.InventoryCreate, db: Session = Depends(get_db)):
-    #para asignar un objeto a un jugador especifico
+#simulamos la respuesta de valve segun tu tfg [cite: 50, 86]
+async def verify_steam_identity(ticket: str):
+    if len(ticket) < 10:
+        raise HTTPException(status_code=401, detail="ticket invalido")
+    return {"steam_id": "76561198000000001", "username": "Paula_Pro"}
+
+@app.post("/auth/login")
+async def login(ticket: str, db: Session = Depends(database.get_db)):
+    steam_user = await verify_steam_identity(ticket)
+    user = db.query(models.User).filter(models.User.steam_id == steam_user["steam_id"]).first()
+    
+    if not user:
+        user = models.User(steam_id=steam_user["steam_id"], username=steam_user["username"])
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    
+    return {"status": "login exitoso", "user_id": str(user.id)}
+
+# --- ENDPOINTS DE INVENTARIO (Los que te faltaban) ---
+
+@app.post("/inventory/{user_id}/items")
+def add_item(user_id: uuid.UUID, item: schemas.InventoryCreate, db: Session = Depends(database.get_db)):
+    #añadimos objetos a la mochila de un id especifico
     db_item = models.Inventory(**item.dict(), owner_id=user_id)
     db.add(db_item)
     db.commit()
     db.refresh(db_item)
     return db_item
 
-@app.get("/inventory/{user_id}", response_model=List[schemas.Inventory])
-def get_inventory(user_id: int, db: Session = Depends(get_db)):
-    #endpoint vulnerable a bola: falta verificar si el token coincide con user_id
-    items = db.query(models.Inventory).filter(models.Inventory.owner_id == user_id).all()
-    return items
+@app.get("/inventory/{user_id}")
+def get_inventory(user_id: uuid.UUID, db: Session = Depends(database.get_db)):
+    # VULNERABILIDAD BOLA: No comprobamos si el que pide es el dueño [cite: 38, 51]
+    # Un atacante puede cambiar el id en la url y robar datos de otros [cite: 39, 41]
+    return db.query(models.Inventory).filter(models.Inventory.owner_id == user_id).all()

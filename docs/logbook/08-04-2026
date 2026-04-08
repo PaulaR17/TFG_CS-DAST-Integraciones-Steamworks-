@@ -1,0 +1,23 @@
+#  08-04-2026
+
+## ## Qué se ha investigado/realizado
+- **Activación del "Radar" DAST**: Despliegue exitoso de `mitmproxy` dentro del ecosistema Docker para interceptar el tráfico entre el cliente y el servidor[cite: 167].
+- **Refactorización a Identificadores Profesionales**: Se han sustituido los IDs incrementales por **UUIDs** en los modelos de base de datos para dificultar ataques de enumeración y elevar la complejidad técnica del proyecto.
+- **Implementación de Identidad Steamworks**: Creación de la lógica de autenticación en la API que simula la validación de tickets de sesión contra los servidores de Valve (AppID 480)[cite: 172].
+- **Configuración de Interceptación en Postman**: Ajuste del proxy personalizado (puerto 8080) para forzar que todas las peticiones de prueba sean auditadas en tiempo real por el panel de `mitmweb`.
+- **Debugging de Errores Críticos**: Resolución de un error de importación circular en Python (`circular import`) y limpieza de volúmenes en Docker para refrescar el esquema de la base de datos tras migrar a UUID.
+
+## ## Qué se ha entendido
+- **Metodología DAST vs SAST**: Se ha comprendido por qué el análisis dinámico es superior para detectar fallos lógicos que son invisibles al simplemente leer el código fuente[cite: 71, 72, 74].
+- **Vulnerabilidad BOLA (API1:2023)**: Se ha entendido cómo la falta de validación de propiedad de un recurso permite que un usuario acceda a datos de otro simplemente manipulando la URL[cite: 37, 38, 39].
+- **Redes en Contenedores**: El concepto de que `localhost` dentro de un contenedor se refiere a sí mismo, por lo que la comunicación entre servicios (Proxy -> API) debe realizarse usando los nombres de servicio definidos en el YAML.
+- **Manipulación de Tráfico**: La importancia de capturar el "handshake" inicial para obtener IDs de sesión reales antes de intentar realizar ataques de inyección o repetición[cite: 153].
+
+## ## Dudas para el proximo dia
+- ¿Cómo capturar el ticket de sesión real desde Unity una vez integremos el SDK de Steamworks.NET?[cite: 171].
+- ¿Qué algoritmos de Machine Learning serán más eficientes para detectar la "iteración lenta" de IDs en los logs del proxy?[cite: 180, 181].
+
+## ## Siguientes pasos
+- Realizar la explotación manual de la vulnerabilidad BOLA capturando el UUID de una "víctima" y consultando su inventario desde el contexto del "atacante".
+- Implementar el ataque de **Mass Assignment** (BOPLA) para intentar elevar privilegios de usuario (`is_admin`) a través de la inyección de campos en el JSON[cite: 45, 46].
+- Empezar a programar el script `addon.py` para automatizar la detección de estas anomalías sin intervención manual.
