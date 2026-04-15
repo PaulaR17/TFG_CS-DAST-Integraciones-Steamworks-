@@ -1,15 +1,19 @@
 from mitmproxy import http
 import json
 
-#esta funcion intercepta las respuestas de la api
+def request(flow: http.HTTPFlow) -> None:
+    # Detectamos si el usuario intenta enviar campos sensibles
+    body = flow.request.get_text()
+    if body:
+        campos_criticos = ["is_admin", "credits", "role"]
+        for campo in campos_criticos:
+            if campo in body:
+                print(f"⚠️ [ALERTA BOPLA] Intento de manipulacion de campo sensible: {campo}")
+
 def response(flow: http.HTTPFlow) -> None:
-    #si la api responde con un login exitoso, capturamos el id para el ataque
-    if "/auth/login" in flow.request.pretty_url and flow.response.status_code == 200:
-        data = json.loads(flow.response.text)
-        user_id = data.get("user_id")
-        print(f"alerta: capturado id de sesion para auditoria: {user_id}")
-        
-    #si detectamos una peticion de inventario, lanzamos el aviso de bola
     if "/inventory/" in flow.request.pretty_url:
-        print(f"detectado flujo critico: comprobando vulnerabilidad bola en {flow.request.url}")
-        #aqui es donde el sistema generaria el informe de vulnerabilidad [cite: 153]
+        print(f"--- [RADAR CERBERUS] ---")
+        print(f"Analizando peticion a: {flow.request.url}")
+        
+        if flow.response.status_code == 200:
+            print(f"ALERTA: Acceso concedido a los datos del ID.") #luego hay que meter una comprobación del ID 

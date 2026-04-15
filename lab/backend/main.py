@@ -4,11 +4,11 @@ from sqlalchemy.orm import Session
 import models, schemas, database
 import uuid #para los ids profesionales tipo uuid
 
-#crea las tablas con el formato uuid para evitar ids predecibles [cite: 39]
+#crea las tablas con el formato uuid para evitar ids predecibles 
 models.Base.metadata.create_all(bind=database.engine)
 app = FastAPI()
 
-#simulamos la respuesta de valve segun tu tfg [cite: 50, 86]
+#simulamos la respuesta de valve 
 async def verify_steam_identity(ticket: str):
     if len(ticket) < 10:
         raise HTTPException(status_code=401, detail="ticket invalido")
@@ -16,18 +16,16 @@ async def verify_steam_identity(ticket: str):
 
 @app.post("/auth/login")
 async def login(ticket: str, db: Session = Depends(database.get_db)):
-    steam_user = await verify_steam_identity(ticket)
-    user = db.query(models.User).filter(models.User.steam_id == steam_user["steam_id"]).first()
+    user = db.query(models.User).filter(models.User.steam_id == ticket).first()
     
     if not user:
-        user = models.User(steam_id=steam_user["steam_id"], username=steam_user["username"])
+        user = models.User(steam_id=ticket, username=f"Jugador_{ticket}")
         db.add(user)
         db.commit()
         db.refresh(user)
     
     return {"status": "login exitoso", "user_id": str(user.id)}
 
-# --- ENDPOINTS DE INVENTARIO (Los que te faltaban) ---
 
 @app.post("/inventory/{user_id}/items")
 def add_item(user_id: uuid.UUID, item: schemas.InventoryCreate, db: Session = Depends(database.get_db)):
@@ -40,6 +38,17 @@ def add_item(user_id: uuid.UUID, item: schemas.InventoryCreate, db: Session = De
 
 @app.get("/inventory/{user_id}")
 def get_inventory(user_id: uuid.UUID, db: Session = Depends(database.get_db)):
-    # VULNERABILIDAD BOLA: No comprobamos si el que pide es el dueño [cite: 38, 51]
-    # Un atacante puede cambiar el id en la url y robar datos de otros [cite: 39, 41]
+    # Un atacante puede cambiar el id en la url y robar datos de otros
     return db.query(models.Inventory).filter(models.Inventory.owner_id == user_id).all()
+
+
+@app.get("/users/{user_id}")
+def get_user_profile(user_id: uuid.UUID, db: Session = Depends(database.get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    return {
+        "username": user.username,
+        "credits": user.credits,
+        "is_admin": user.is_admin
+    }

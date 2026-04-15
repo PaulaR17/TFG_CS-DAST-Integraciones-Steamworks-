@@ -1,0 +1,16 @@
+
+## ## Qué se ha investigado/realizado
+- **Explotación de Mass Assignment (BOPLA)**: Se ha inyectado con éxito un payload JSON con campos privilegiados (`is_admin`, `credits`) en el flujo de registro/login.
+- **Automatización de Detección DAST**: Se ha programado un módulo en el `addon.py` que analiza el cuerpo de las peticiones (`Request Body`) en busca de intentos de manipulación de propiedades sensibles.
+- **Validación de Alertas**: Confirmación visual en los logs de Cerberus de la detección en tiempo real de los campos inyectados.
+
+## ## Qué se ha entendido
+- **Vulnerabilidad BOPLA (API3:2023)**: Cómo la falta de filtrado en los esquemas de entrada (Input Validation) permite a un atacante modificar el estado interno del servidor.
+- **Inspección de Payload**: La diferencia entre analizar cabeceras (headers) y analizar el cuerpo (body) de una petición HTTP para encontrar fallos de lógica de negocio.
+
+## ## Dudas para el proximo dia
+- ¿Cómo mitigar esto en el código? (Uso de DTOs o esquemas de Pydantic específicos para evitar el Mass Assignment).
+
+## ## Siguientes pasos
+- Implementar el endpoint de `/users/{id}` para confirmar la persistencia del ataque BOPLA.
+- Empezar a redactar el capítulo de "Resultados de la Auditoría Dinámica" con las capturas obtenidas.
