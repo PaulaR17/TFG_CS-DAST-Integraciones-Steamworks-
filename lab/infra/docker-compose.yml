@@ -28,13 +28,16 @@ services:
       - PYTHONUNBUFFERED=1
     volumes:
       - ../proxy:/home/mitmproxy/scripts
+      - ../reports:/app/reports
     ports:
       - "8080:8080"
       - "8081:8081"
     command: >
-      mitmweb --web-host 0.0.0.0 
-      --web-port 8081 
+      mitmweb
+      --web-host 0.0.0.0
+      --web-port 8081
       --set web_auth_token=paula123
-      --scripts /home/mitmproxy/scripts/addon.py
+      -s /home/mitmproxy/scripts/addon.py
+
 volumes:
   db_data:
