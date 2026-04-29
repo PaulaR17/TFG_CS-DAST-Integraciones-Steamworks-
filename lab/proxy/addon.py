@@ -15,25 +15,21 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
-
 from mitmproxy import http
 
 
 #archivos de salida dentro del contenedor
-
 REPORTS_DIR = Path("/app/reports")
 FINDINGS_FILE = REPORTS_DIR / "cerberus_findings.jsonl"
 STARTUP_CHECK_FILE = REPORTS_DIR / "cerberus_startup_check.txt"
 
 
 #memoria sencilla para relacionar tokens con usuarios
-
 TOKEN_TO_USER_ID: Dict[str, str] = {}
 TOKEN_TO_USERNAME: Dict[str, str] = {}
 
 
 #campos que me parecen peligrosos si vienen controlados por el cliente
-
 SENSITIVE_FIELDS = {
     "credits",
     "is_admin",
@@ -43,25 +39,17 @@ SENSITIVE_FIELDS = {
 
 
 #helpers
-
-def now_iso() -> str:
-    """
-    devuelve la fecha actual en formato iso.
-    """
+def now_iso() -> str: #devuelve la fecha actual en formato iso.
     return datetime.now(timezone.utc).isoformat()
 
 
-def ensure_reports_dir() -> None:
-    """
-    crea /app/reports dentro del contenedor si todavia no existe.
-    """
+def ensure_reports_dir() -> None: #crea /app/reports dentro del contenedor si todavia no existe.
+   
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def write_startup_check() -> None:
-    """
-    crea un archivo pequeño para comprobar que mitmproxy ha cargado el addon.
-    """
+def write_startup_check() -> None: #crea un archivo pequeño para comprobar que mitmproxy ha cargado el addon.
+
     try:
         ensure_reports_dir()
 
@@ -76,10 +64,7 @@ def write_startup_check() -> None:
         print(f"[CERBERUS ERROR] Could not write startup check file: {error}")
 
 
-def save_finding(finding: Dict[str, Any]) -> None:
-    """
-    guarda un hallazgo en reports/cerberus_findings.jsonl.
-    """
+def save_finding(finding: Dict[str, Any]) -> None: #guarda un hallazgo en reports/cerberus_findings.jsonl.
 
     finding["timestamp"] = now_iso()
     finding["source"] = "cerberus_mitmproxy"
@@ -97,14 +82,10 @@ def save_finding(finding: Dict[str, Any]) -> None:
         print(f"[CERBERUS ERROR] Could not write finding: {error}")
 
 
-def parse_json_request(flow: http.HTTPFlow) -> Optional[Dict[str, Any]]:
-    """
-    intenta leer el body de una request como json.
-
-    si no hay body, no es json o no es un objeto, devuelvo none.
-    """
+def parse_json_request(flow: http.HTTPFlow) -> Optional[Dict[str, Any]]: #intenta leer el body de una request como json.
+   
     try:
-        if not flow.request.content:
+        if not flow.request.content: #si no hay body, no es json o no es un objeto, devuelvo none.
             return None
 
         request_text = flow.request.get_text()
@@ -123,12 +104,9 @@ def parse_json_request(flow: http.HTTPFlow) -> Optional[Dict[str, Any]]:
         return None
 
 
-def parse_json_response(flow: http.HTTPFlow) -> Optional[Dict[str, Any]]:
-    """
-    intenta leer el body de una response como json.
+def parse_json_response(flow: http.HTTPFlow) -> Optional[Dict[str, Any]]: #ntenta leer el body de una response como json.
 
-    lo uso para aprender cosas del login, como token y user_id.
-    """
+    # uso para aprender cosas del login, como token y user_id.
     try:
         if not flow.response:
             return None
@@ -152,12 +130,10 @@ def parse_json_response(flow: http.HTTPFlow) -> Optional[Dict[str, Any]]:
         return None
 
 
-def extract_bearer_token(flow: http.HTTPFlow) -> Optional[str]:
-    """
-    saca el token de la cabecera authorization.
-
-    espero algo como: authorization: bearer <token>
-    """
+def extract_bearer_token(flow: http.HTTPFlow) -> Optional[str]: #saca el token de la cabecera authorization.
+    
+    # se esoera q salga algo como: authorization: bearer <token>
+  
     authorization = flow.request.headers.get("Authorization")
 
     if authorization is None:
@@ -169,10 +145,8 @@ def extract_bearer_token(flow: http.HTTPFlow) -> Optional[str]:
     return authorization.replace("Bearer ", "").strip()
 
 
-def extract_inventory_user_id(path: str) -> Optional[str]:
-    """
-    saca el user_id de /vulnerable/inventory/{user_id}.
-    """
+def extract_inventory_user_id(path: str) -> Optional[str]: #saca el user_id de /vulnerable/inventory/{user_id}.
+    
     match = re.match(r"^/vulnerable/inventory/([^/]+)$", path)
 
     if not match:
@@ -183,22 +157,16 @@ def extract_inventory_user_id(path: str) -> Optional[str]:
 
 #hook de carga de mitmproxy
 
-def load(loader) -> None:
-    """
-    se ejecuta cuando mitmproxy carga el addon.
+def load(loader) -> None: #asi puedo ver en logs y en archivo que cerberus esta vivo.
 
-    asi puedo ver en logs y en archivo que cerberus esta vivo.
-    """
     print("[CERBERUS] Addon loaded successfully.")
     write_startup_check()
 
 
 #hook de requests
 
-def request(flow: http.HTTPFlow) -> None:
+def request(flow: http.HTTPFlow) -> None:  #cada vez que mitmproxy ve una request
     """
-    se ejecuta cada vez que mitmproxy ve una request.
-
     aqui todavia no se si el ataque ha funcionado, pero si puedo marcar cosas
     sospechosas que el cliente esta intentando mandar.
     """
@@ -267,14 +235,8 @@ def request(flow: http.HTTPFlow) -> None:
 
 
 #hook de responses
-
 def response(flow: http.HTTPFlow) -> None:
-    """
-    se ejecuta cuando mitmproxy ve la respuesta del backend.
-
-    aqui ya puedo aprender relaciones token -> usuario y confirmar algunos fallos.
-    """
-
+    #aqui ya puedo aprender relaciones token -> usuario y confirmar algunos fallos.
     method = flow.request.method
     path = flow.request.path
 

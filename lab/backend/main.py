@@ -1,14 +1,11 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 import uuid
-
 import models
 import schemas
 import database
-
 from security import create_demo_token, get_current_identity
 from audit_logger import write_audit_log
-
 
 models.Base.metadata.create_all(bind=database.engine)
 
@@ -18,15 +15,12 @@ app = FastAPI(
     version="1.0.0"
 )
 
-
 #simulacion muy simple de steamworks
 
 async def verify_steam_identity(steam_ticket: str):
     """
     simula la validacion de un ticket de steam.
-
-    en un proyecto real esto llamaria a los servidores de valve. aqui solo miro
-    si el ticket existe en este diccionario de prueba.
+    aqui solo miro si el ticket existe en este diccionario de prueba.
     """
 
     demo_users = {
