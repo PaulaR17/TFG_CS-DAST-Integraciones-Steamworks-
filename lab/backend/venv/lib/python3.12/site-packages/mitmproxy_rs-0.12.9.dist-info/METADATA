@@ -1,0 +1,14 @@
+Metadata-Version: 2.4
+Name: mitmproxy_rs
+Version: 0.12.9
+Classifier: Programming Language :: Rust
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Development Status :: 5 - Production/Stable
+Requires-Dist: mitmproxy-windows==0.12.9 ; os_name == 'nt'
+Requires-Dist: mitmproxy-linux==0.12.9 ; sys_platform == 'linux'
+Requires-Dist: mitmproxy-macos==0.12.9 ; sys_platform == 'darwin'
+Requires-Python: >=3.12

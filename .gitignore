@@ -1,0 +1,73 @@
+# Carpetas generadas por Unity (no subir nunca)
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+
+# Archivos de compilación
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# OS/IDE
+.vs/
+.vscode/
+.idea/
+*.DS_Store
+
+# Recursos pesados de Steam
+steam_appid.txt
+
+# Unity package cache
+[Aa]ssets/AssetStoreTools*
+[Aa]ssets/Plugins/Editor/JetBrains*
+
+# Archivos de crash
+sysinfo.txt
+crashlytics-build.properties
+# === Python (.venv del backend) ===
+.venv/
+**/__pycache__/
+*.pyc
+
+# === Unity ===
+SteamworksDASTClient/[Ll]ibrary/
+SteamworksDASTClient/[Tt]emp/
+SteamworksDASTClient/[Oo]bj/
+SteamworksDASTClient/[Bb]uild/
+SteamworksDASTClient/[Bb]uilds/
+SteamworksDASTClient/[Ll]ogs/
+SteamworksDASTClient/[Uu]ser[Ss]ettings/
+SteamworksDASTClient/.vs/
+SteamworksDASTClient/*.csproj
+SteamworksDASTClient/*.sln
+SteamworksDASTClient/*.suo
+SteamworksDASTClient/*.user
+SteamworksDASTClient/*.userprefs
+SteamworksDASTClient/*.unityproj
+SteamworksDASTClient/*.pdb
+SteamworksDASTClient/*.mdb
+
+# === Docker / runtime ===
+lab/reports/*.jsonl
+lab/reports/*.txt
+
+# === IDE / OS ===
+.vs/
+.vscode/
+.idea/
+*.DS_Store

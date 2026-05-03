@@ -1,0 +1,46 @@
+services:
+  db:
+    image: postgres:15
+    container_name: tfg_db
+    environment:
+      - POSTGRES_USER=paula
+      - POSTGRES_PASSWORD=paula_rg
+      - POSTGRES_DB=tfg_game_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  api:
+    build: ../backend
+    container_name: tfg_api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://paula:paula_rg@db:5432/tfg_game_db
+    depends_on:
+      - db
+
+  proxy:
+    image: mitmproxy/mitmproxy
+    container_name: tfg_proxy
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ../proxy:/home/mitmproxy/scripts
+      - ../reports:/app/reports
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    depends_on:
+      - api
+    command: >
+      mitmweb
+      --mode reverse:http://api:8000
+      --web-host 0.0.0.0
+      --web-port 8081
+      --set web_auth_token=paula123
+      -s /home/mitmproxy/scripts/addon.py
+
+volumes:
+  db_data:

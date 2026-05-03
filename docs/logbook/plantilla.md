@@ -1,0 +1,15 @@
+# fecha
+
+## Qué se ha investigado/realizado
+- 
+
+## Qué se ha entendido
+- El servidor debe validar con Steam backend
+- La API Web funciona con API keys
+
+## Dudas para el proximo dia
+- ¿Cómo se valida exactamente el ticket?
+- ¿Qué parte es simulable sin Steam real?
+
+## Siguientes pasos
+- Mapear flujo completo
