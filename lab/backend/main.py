@@ -55,6 +55,55 @@ def root():
     }
 
 
+@app.post("/auth/login")
+async def login(payload: dict, db: Session = Depends(database.get_db)):
+    """
+    Login clasico del laboratorio.
+    Acepta un steam_ticket sintético que mapea a uno de los usuarios demo.
+    Usado por la suite automatizada de ataques.
+    """
+    steam_ticket = payload.get("steam_ticket")
+    if not steam_ticket:
+        raise HTTPException(status_code=400, detail="Missing steam_ticket")
+
+    # Validacion contra el dict de tickets demo del laboratorio
+    steam_user = await verify_steam_identity(steam_ticket)
+
+    # Buscar o crear usuario en la DB
+    user = db.query(models.User).filter(
+        models.User.steam_id == steam_user["steam_id"]
+    ).first()
+
+    if not user:
+        user = models.User(
+            steam_id=steam_user["steam_id"],
+            username=steam_user["username"],
+            credits=100,
+            is_admin=False
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    # Genera token débil base64 (la vulnerabilidad intencional)
+    token_payload = {"user_id": str(user.id), "username": user.username}
+    access_token = base64.urlsafe_b64encode(
+        json.dumps(token_payload).encode()
+    ).decode()
+
+    write_audit_log("classic_login", {
+        "steam_ticket": steam_ticket,
+        "user_id": str(user.id)
+    })
+
+    return {
+        "access_token": access_token,
+        "user_id": str(user.id),
+        "username": user.username,
+        "steam_id": user.steam_id,
+        "credits": user.credits
+    }
+
 #auth
 
 @app.post("/auth/steam_login")
