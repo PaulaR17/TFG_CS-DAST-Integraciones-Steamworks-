@@ -8,7 +8,7 @@ using Steamworks;
 public class ApiClient : MonoBehaviour
 {
     [Header("Backend (apunta a mitmproxy reverse, no al API directo)")]
-    public string backendBaseUrl = "http://localhost:8080";
+    public string backendBaseUrl = "http://192.168.0.103:8080";
 
     private string accessToken = null;
     private string userId = null;
