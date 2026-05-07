@@ -1,0 +1,114 @@
+using UnityEngine;
+using TMPro;
+using Steamworks; // necesario para SteamUser
+
+public class GameManager : MonoBehaviour
+{
+    public static GameManager Instance { get; private set; }
+
+    [Header("UI")]
+    public TMP_Text scoreText;
+    public TMP_Text creditsText;
+    public TMP_Text healthText;
+    public GameObject shopPanel;
+    public GameObject gameOverPanel;
+    public TMP_Text finalScoreText;
+
+    [Header("Player")]
+    public GameObject player;
+
+    private int score = 0;
+    private int health = 3;
+    private bool achievement100Unlocked = false;
+    private bool isGameOver = false;
+
+    void Awake()
+    {
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
+    }
+
+    void Start()
+    {
+        shopPanel.SetActive(false);
+        gameOverPanel.SetActive(false);
+        UpdateHUD();
+
+        // Obtenemos el SteamID y el nombre del jugador directamente de Steamworks
+        string steamId = SteamUser.GetSteamID().ToString();
+        string personaName = SteamFriends.GetPersonaName();
+
+        // Enviamos ambos parámetros al backend
+        ApiClient.Instance.SteamLogin(steamId, personaName,
+            onSuccess: () =>
+            {
+                Debug.Log("[GM] Login OK, refrescando perfil");
+                ApiClient.Instance.GetUserMe(
+                    (credits) => UpdateHUD(),
+                    (err) => Debug.LogError("[GM] GetUserMe error: " + err));
+            },
+            onError: (err) => Debug.LogError("[GM] Login error: " + err));
+    }
+
+    public void AddScore(int amount)
+    {
+        if (isGameOver) return;
+        score += amount;
+        UpdateHUD();
+
+        if (!achievement100Unlocked && score >= 100)
+        {
+            achievement100Unlocked = true;
+            ApiClient.Instance.UnlockAchievement("FIRST_100_POINTS",
+                () => Debug.Log("[GM] Logro desbloqueado"),
+                (err) => Debug.LogError("[GM] Achievement error: " + err));
+        }
+    }
+
+    public void OnPickupPowerUp(string itemName, string quality)
+    {
+        ApiClient.Instance.AddItemToInventory(itemName, quality,
+            () => Debug.Log("[GM] Item añadido al inventario"),
+            (err) => Debug.LogError("[GM] AddItem error: " + err));
+    }
+
+    public void TakeDamage()
+    {
+        if (isGameOver) return;
+        health--;
+        UpdateHUD();
+        if (health <= 0) GameOver();
+    }
+
+    public void GameOver()
+    {
+        isGameOver = true;
+        if (player != null) player.SetActive(false);
+
+        string saveData = $"{{\"score\":{score},\"username\":\"{ApiClient.Instance.Username}\"}}";
+        ApiClient.Instance.CloudSave(saveData,
+            () => Debug.Log("[GM] Save subido a la nube"),
+            (err) => Debug.LogError("[GM] CloudSave error: " + err));
+
+        finalScoreText.text = $"Score: {score}";
+        gameOverPanel.SetActive(true);
+    }
+
+    public void ToggleShop()
+    {
+        shopPanel.SetActive(!shopPanel.activeSelf);
+    }
+
+    public void OnPurchaseSuccess(int cost)
+    {
+        ApiClient.Instance.GetUserMe((c) => UpdateHUD(),
+                                     (err) => Debug.LogError(err));
+    }
+
+    private void UpdateHUD()
+    {
+        scoreText.text = $"Score: {score}";
+        creditsText.text = $"Credits: {(ApiClient.Instance != null ? ApiClient.Instance.Credits : 0)}";
+        healthText.text = $"HP: {health}";
+    }
+}
