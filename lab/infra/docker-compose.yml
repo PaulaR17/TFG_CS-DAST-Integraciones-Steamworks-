@@ -29,25 +29,23 @@ services:
     restart: on-failure
 
   proxy:
-    image: mitmproxy/mitmproxy
+    image: mitmproxy/mitmproxy:latest
     container_name: tfg_proxy
-    environment:
-      - PYTHONUNBUFFERED=1
-    volumes:
-      - ../proxy:/home/mitmproxy/scripts
-      - ../reports:/app/reports
     ports:
       - "8080:8080"
       - "8081:8081"
-    depends_on:
-      - api
+    volumes:
+      - ../proxy:/home/mitmproxy/scripts
+      - ../reports:/home/mitmproxy/reports
     command: >
       mitmweb
-      --mode reverse:http://api:8000
-      --web-host 0.0.0.0
-      --web-port 8081
-      --set web_auth_token=paula123
-      -s /home/mitmproxy/scripts/addon.py
+        --mode reverse:http://api:8000
+        --listen-host 0.0.0.0
+        -p 8080
+        --web-host 0.0.0.0
+        --web-port 8081
+        --set web_password=tfg2026
+        -s /home/mitmproxy/scripts/addon.py
 
 volumes:
   db_data:
