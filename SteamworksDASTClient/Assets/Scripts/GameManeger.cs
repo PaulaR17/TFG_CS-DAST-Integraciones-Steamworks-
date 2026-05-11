@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
-using Steamworks; // necesario para SteamUser
+using Steamworks;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -13,6 +14,8 @@ public class GameManager : MonoBehaviour
     public GameObject shopPanel;
     public GameObject gameOverPanel;
     public TMP_Text finalScoreText;
+    public UnityEngine.UI.Button restartButton;
+    public UnityEngine.UI.Button mainMenuButton;
 
     [Header("Player")]
     public GameObject player;
@@ -48,6 +51,23 @@ public class GameManager : MonoBehaviour
                     (err) => Debug.LogError("[GM] GetUserMe error: " + err));
             },
             onError: (err) => Debug.LogError("[GM] Login error: " + err));
+
+        if (restartButton != null)
+            restartButton.onClick.AddListener(OnRestart);
+        if (mainMenuButton != null)
+            mainMenuButton.onClick.AddListener(OnBackToMenu);
+    }
+
+    public void OnRestart()
+    {
+        Debug.Log("[GM] Reiniciando partida...");
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public void OnBackToMenu()
+    {
+        Debug.Log("[GM] Volviendo al menú...");
+        SceneManager.LoadScene("MainMenu");
     }
 
     public void AddScore(int amount)

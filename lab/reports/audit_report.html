@@ -52,7 +52,7 @@
 <header>
   <h1>Steamworks DAST Lab — Technical Audit Report</h1>
   <p>Metodología DAST con estado para auditar integraciones Steamworks</p>
-  <p>Paula Romero Gallart · Universidad Europea de Madrid · Generado 2026-05-08 22:57:54</p>
+  <p>Paula Romero Gallart · Universidad Europea de Madrid · Generado 2026-05-08 23:58:27</p>
 </header>
 
 <main>
@@ -60,14 +60,14 @@
     <h2>Resumen ejecutivo</h2>
     <div class="grid">
       <div class="metric">
-        <div class="num">48</div><div class="label">Hallazgos totales</div>
+        <div class="num">52</div><div class="label">Hallazgos totales</div>
       </div>
       <div class="metric" style="border-color:#dc2626">
         <div class="num" style="color:#dc2626">0</div>
         <div class="label">Confirmados</div>
       </div>
       <div class="metric" style="border-color:#f59e0b">
-        <div class="num" style="color:#f59e0b">48</div>
+        <div class="num" style="color:#f59e0b">52</div>
         <div class="label">Observados</div>
       </div>
       <div class="metric" style="border-color:#10b981">
@@ -570,6 +570,191 @@
 
     <tr>
       <td>12</td>
+      <td>Active Attack</td>
+      <td><strong>Broken Object Property Level Authorization / Mass Assignment</strong></td>
+      <td><span class="sev" style="background:#dc2626">High</span></td>
+      <td>API3:2023 Broken Object Property Level Authorization</td>
+      <td><span class="badge badge-observed">OBSERVED</span></td>
+      <td><code>/vulnerable/users/me</code></td>
+    </tr>
+    <tr class="evidence-row">
+      <td colspan="7">
+        <details>
+          <summary>Evidencia técnica + mitigación</summary>
+          <pre>{
+  "initial_profile": {
+    "id": "99e4d323-bbec-4748-acbb-33a11e1ba2a8",
+    "steam_id": "76561198000000002",
+    "username": "SafeMassAssignmentUser",
+    "credits": 787777,
+    "is_admin": false
+  },
+  "vulnerable_payload": {
+    "username": "MassAssignmentUser",
+    "credits": 777777
+  },
+  "vulnerable_response": {
+    "id": "99e4d323-bbec-4748-acbb-33a11e1ba2a8",
+    "steam_id": "76561198000000002",
+    "username": "MassAssignmentUser",
+    "credits": 777777,
+    "is_admin": false
+  },
+  "secure_payload": {
+    "username": "SafeMassAssignmentUser",
+    "credits": 1
+  },
+  "secure_response": {
+    "id": "99e4d323-bbec-4748-acbb-33a11e1ba2a8",
+    "steam_id": "76561198000000002",
+    "username": "SafeMassAssignmentUser",
+    "credits": 777777,
+    "is_admin": false
+  },
+  "expected_secure_behavior": "username is updated, but credits remains unchanged"
+}</pre>
+          <p><strong>Mitigación recomendada:</strong> Use strict input DTOs and whitelist only the fields that the client is allowed to modify. Sensitive fields such as credits and is_admin must never be accepted from client-controlled JSON.</p>
+        </details>
+      </td>
+    </tr>
+    
+
+    <tr>
+      <td>13</td>
+      <td>Active Attack</td>
+      <td><strong>Weak Token Integrity / User Impersonation</strong></td>
+      <td><span class="sev" style="background:#7c2d12">Critical</span></td>
+      <td>API2:2023 Broken Authentication</td>
+      <td><span class="badge badge-observed">OBSERVED</span></td>
+      <td><code>/users/me</code></td>
+    </tr>
+    <tr class="evidence-row">
+      <td colspan="7">
+        <details>
+          <summary>Evidencia técnica + mitigación</summary>
+          <pre>{
+  "attacker_user_id": "99e4d323-bbec-4748-acbb-33a11e1ba2a8",
+  "victim_user_id": "edc000d7-80bb-47c4-8179-bec2491f717a",
+  "victim_steam_id": "76561198000000003",
+  "status_code": 200,
+  "response_body": {
+    "id": "edc000d7-80bb-47c4-8179-bec2491f717a",
+    "steam_id": "76561198000000003",
+    "username": "Victim_Test",
+    "credits": 100,
+    "is_admin": false
+  }
+}</pre>
+          <p><strong>Mitigación recomendada:</strong> Replace unsigned Base64 tokens with signed JWTs or server-side sessions. In a real Steamworks integration, validate the Steam ticket server-side against Steam Web API and generate a signed session token with expiration.</p>
+        </details>
+      </td>
+    </tr>
+    
+
+    <tr>
+      <td>14</td>
+      <td>Active Attack</td>
+      <td><strong>Broken Object Level Authorization (BOLA)</strong></td>
+      <td><span class="sev" style="background:#dc2626">High</span></td>
+      <td>API1:2023 Broken Object Level Authorization</td>
+      <td><span class="badge badge-observed">OBSERVED</span></td>
+      <td><code>/vulnerable/inventory/{user_id}</code></td>
+    </tr>
+    <tr class="evidence-row">
+      <td colspan="7">
+        <details>
+          <summary>Evidencia técnica + mitigación</summary>
+          <pre>{
+  "attacker_user_id": "99e4d323-bbec-4748-acbb-33a11e1ba2a8",
+  "victim_user_id": "edc000d7-80bb-47c4-8179-bec2491f717a",
+  "vulnerable_status_code": 200,
+  "secure_status_code": 403,
+  "returned_items": [
+    {
+      "id": "0023cfc2-fffe-4c3b-b0d1-a6331cc698e4",
+      "item_name": "Golden Sword e27d12c2-b15a-4130-a1c5-da461fb525e9",
+      "quantity": 1,
+      "owner_id": "edc000d7-80bb-47c4-8179-bec2491f717a"
+    },
+    {
+      "id": "ab7b7552-01ba-4e24-8cd6-789f512c5115",
+      "item_name": "Golden Sword f8c46e3d-2be4-432d-a123-b9840597c4bf",
+      "quantity": 1,
+      "owner_id": "edc000d7-80bb-47c4-8179-bec2491f717a"
+    },
+    {
+      "id": "c7754855-3fba-414f-a1ee-c1bcbae5cfb5",
+      "item_name": "Golden Sword b7491c94-19ef-4626-bb02-f623051b9407",
+      "quantity": 1,
+      "owner_id": "edc000d7-80bb-47c4-8179-bec2491f717a"
+    },
+    {
+      "id": "4b7430f8-8b18-4dac-a5fc-2598ab9e30cf",
+      "item_name": "Golden Sword 7f6774ea-797d-4605-8094-b51933f8b839",
+      "quantity": 1,
+      "owner_id": "edc000d7-80bb-47c4-8179-bec2491f717a"
+    },
+    {
+      "id": "048083b4-8b52-44c1-b754-8b4320d988c6",
+      "item_name": "Golden Sword 6271428b-af6a-4b25-ab4e-50a41394e758",
+      "quantity": 1,
+      "owner_id": "edc000d7-80bb-47c4-8179-bec2491f717a"
+    }
+  ]
+}</pre>
+          <p><strong>Mitigación recomendada:</strong> Validate that the requested user_id matches the authenticated user_id extracted from the token before querying inventory data.</p>
+        </details>
+      </td>
+    </tr>
+    
+
+    <tr>
+      <td>15</td>
+      <td>Active Attack</td>
+      <td><strong>Client-Side Trust in Transaction Finalization</strong></td>
+      <td><span class="sev" style="background:#7c2d12">Critical</span></td>
+      <td>API6:2023 Unrestricted Access to Sensitive Business Flows</td>
+      <td><span class="badge badge-observed">OBSERVED</span></td>
+      <td><code>/vulnerable/transactions/finalize</code></td>
+    </tr>
+    <tr class="evidence-row">
+      <td colspan="7">
+        <details>
+          <summary>Evidencia técnica + mitigación</summary>
+          <pre>{
+  "attacker_user_id": "99e4d323-bbec-4748-acbb-33a11e1ba2a8",
+  "initial_credits": 777777,
+  "final_credits": 782777,
+  "amount": 5000,
+  "order_id": "ORDER_FRAUD_57e2ba7d-0a58-4ec0-a5d7-7efa4012853d",
+  "init_response": {
+    "id": "23cb8539-4f6b-43b3-ad3c-50f16bd9aa2f",
+    "order_id": "ORDER_FRAUD_57e2ba7d-0a58-4ec0-a5d7-7efa4012853d",
+    "item_name": "Mega Coins Pack",
+    "amount": 5000,
+    "approved_by_client": false,
+    "finalized": false,
+    "owner_id": "99e4d323-bbec-4748-acbb-33a11e1ba2a8"
+  },
+  "finalize_response": {
+    "id": "23cb8539-4f6b-43b3-ad3c-50f16bd9aa2f",
+    "order_id": "ORDER_FRAUD_57e2ba7d-0a58-4ec0-a5d7-7efa4012853d",
+    "item_name": "Mega Coins Pack",
+    "amount": 5000,
+    "approved_by_client": false,
+    "finalized": true,
+    "owner_id": "99e4d323-bbec-4748-acbb-33a11e1ba2a8"
+  },
+  "secure_status_code": 403
+}</pre>
+          <p><strong>Mitigación recomendada:</strong> Never trust approved_by_client or any payment state sent by the client. The backend must verify the transaction directly with Steam Web API or a trusted payment provider before granting credits or virtual items.</p>
+        </details>
+      </td>
+    </tr>
+    
+
+    <tr>
+      <td>16</td>
       <td>Cerberus Observer</td>
       <td><strong>Broken Object Level Authorization (BOLA)</strong></td>
       <td><span class="sev" style="background:#dc2626">High</span></td>
@@ -595,7 +780,7 @@
     
 
     <tr>
-      <td>13</td>
+      <td>17</td>
       <td>Cerberus Observer</td>
       <td><strong>Sensitive Client-Controlled Property</strong></td>
       <td><span class="sev" style="background:#f59e0b">Medium</span></td>
@@ -625,7 +810,7 @@
     
 
     <tr>
-      <td>14</td>
+      <td>18</td>
       <td>Cerberus Observer</td>
       <td><strong>Sensitive Client-Controlled Property</strong></td>
       <td><span class="sev" style="background:#f59e0b">Medium</span></td>
@@ -655,7 +840,7 @@
     
 
     <tr>
-      <td>15</td>
+      <td>19</td>
       <td>Cerberus Observer</td>
       <td><strong>Sensitive Client-Controlled Property</strong></td>
       <td><span class="sev" style="background:#f59e0b">Medium</span></td>
@@ -685,7 +870,7 @@
     
 
     <tr>
-      <td>16</td>
+      <td>20</td>
       <td>Cerberus Observer</td>
       <td><strong>Client-Side Transaction Approval Attempt</strong></td>
       <td><span class="sev" style="background:#dc2626">High</span></td>
@@ -712,7 +897,7 @@
     
 
     <tr>
-      <td>17</td>
+      <td>21</td>
       <td>Cerberus Observer</td>
       <td><strong>Sensitive Client-Controlled Property</strong></td>
       <td><span class="sev" style="background:#f59e0b">Medium</span></td>
@@ -742,120 +927,6 @@
     
 
     <tr>
-      <td>18</td>
-      <td>Cerberus Observer</td>
-      <td><strong>Sensitive Client-Controlled Property</strong></td>
-      <td><span class="sev" style="background:#f59e0b">Medium</span></td>
-      <td>API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow</td>
-      <td><span class="badge badge-observed">OBSERVED</span></td>
-      <td><code>/vulnerable/transactions/finalize</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Evidencia técnica + mitigación</summary>
-          <pre>{
-  "method": "POST",
-  "path": "/vulnerable/transactions/finalize",
-  "detected_fields": [
-    "approved_by_client"
-  ],
-  "request_body": {
-    "order_id": "BUY_639134417479230096",
-    "approved_by_client": true
-  }
-}</pre>
-          <p><strong>Mitigación recomendada:</strong> Reject or ignore client-controlled sensitive fields such as credits, is_admin, role and approved_by_client.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td>19</td>
-      <td>Cerberus Observer</td>
-      <td><strong>Client-Side Transaction Approval Attempt</strong></td>
-      <td><span class="sev" style="background:#dc2626">High</span></td>
-      <td>API6:2023 Unrestricted Access to Sensitive Business Flows</td>
-      <td><span class="badge badge-observed">OBSERVED</span></td>
-      <td><code>/vulnerable/transactions/finalize</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Evidencia técnica + mitigación</summary>
-          <pre>{
-  "method": "POST",
-  "path": "/vulnerable/transactions/finalize",
-  "request_body": {
-    "order_id": "BUY_639134417479230096",
-    "approved_by_client": true
-  }
-}</pre>
-          <p><strong>Mitigación recomendada:</strong> The backend must verify payment state server-side against Steam Web API or another trusted payment provider.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td>20</td>
-      <td>Cerberus Observer</td>
-      <td><strong>Sensitive Client-Controlled Property</strong></td>
-      <td><span class="sev" style="background:#f59e0b">Medium</span></td>
-      <td>API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow</td>
-      <td><span class="badge badge-observed">OBSERVED</span></td>
-      <td><code>/vulnerable/transactions/finalize</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Evidencia técnica + mitigación</summary>
-          <pre>{
-  "method": "POST",
-  "path": "/vulnerable/transactions/finalize",
-  "detected_fields": [
-    "approved_by_client"
-  ],
-  "request_body": {
-    "order_id": "BUY_639134420370336068",
-    "approved_by_client": true
-  }
-}</pre>
-          <p><strong>Mitigación recomendada:</strong> Reject or ignore client-controlled sensitive fields such as credits, is_admin, role and approved_by_client.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td>21</td>
-      <td>Cerberus Observer</td>
-      <td><strong>Client-Side Transaction Approval Attempt</strong></td>
-      <td><span class="sev" style="background:#dc2626">High</span></td>
-      <td>API6:2023 Unrestricted Access to Sensitive Business Flows</td>
-      <td><span class="badge badge-observed">OBSERVED</span></td>
-      <td><code>/vulnerable/transactions/finalize</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Evidencia técnica + mitigación</summary>
-          <pre>{
-  "method": "POST",
-  "path": "/vulnerable/transactions/finalize",
-  "request_body": {
-    "order_id": "BUY_639134420370336068",
-    "approved_by_client": true
-  }
-}</pre>
-          <p><strong>Mitigación recomendada:</strong> The backend must verify payment state server-side against Steam Web API or another trusted payment provider.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
       <td>22</td>
       <td>Cerberus Observer</td>
       <td><strong>Sensitive Client-Controlled Property</strong></td>
@@ -875,7 +946,7 @@
     "approved_by_client"
   ],
   "request_body": {
-    "order_id": "BUY_639138685343572241",
+    "order_id": "BUY_639134417479230096",
     "approved_by_client": true
   }
 }</pre>
@@ -902,7 +973,7 @@
   "method": "POST",
   "path": "/vulnerable/transactions/finalize",
   "request_body": {
-    "order_id": "BUY_639138685343572241",
+    "order_id": "BUY_639134417479230096",
     "approved_by_client": true
   }
 }</pre>
@@ -932,7 +1003,7 @@
     "approved_by_client"
   ],
   "request_body": {
-    "order_id": "BUY_639138685378545500",
+    "order_id": "BUY_639134420370336068",
     "approved_by_client": true
   }
 }</pre>
@@ -959,7 +1030,7 @@
   "method": "POST",
   "path": "/vulnerable/transactions/finalize",
   "request_body": {
-    "order_id": "BUY_639138685378545500",
+    "order_id": "BUY_639134420370336068",
     "approved_by_client": true
   }
 }</pre>
@@ -989,7 +1060,7 @@
     "approved_by_client"
   ],
   "request_body": {
-    "order_id": "BUY_639138686056692567",
+    "order_id": "BUY_639138685343572241",
     "approved_by_client": true
   }
 }</pre>
@@ -1016,7 +1087,7 @@
   "method": "POST",
   "path": "/vulnerable/transactions/finalize",
   "request_body": {
-    "order_id": "BUY_639138686056692567",
+    "order_id": "BUY_639138685343572241",
     "approved_by_client": true
   }
 }</pre>
@@ -1046,7 +1117,7 @@
     "approved_by_client"
   ],
   "request_body": {
-    "order_id": "BUY_639138686062392717",
+    "order_id": "BUY_639138685378545500",
     "approved_by_client": true
   }
 }</pre>
@@ -1073,7 +1144,7 @@
   "method": "POST",
   "path": "/vulnerable/transactions/finalize",
   "request_body": {
-    "order_id": "BUY_639138686062392717",
+    "order_id": "BUY_639138685378545500",
     "approved_by_client": true
   }
 }</pre>
@@ -1103,7 +1174,7 @@
     "approved_by_client"
   ],
   "request_body": {
-    "order_id": "BUY_639138686323041396",
+    "order_id": "BUY_639138686056692567",
     "approved_by_client": true
   }
 }</pre>
@@ -1130,7 +1201,7 @@
   "method": "POST",
   "path": "/vulnerable/transactions/finalize",
   "request_body": {
-    "order_id": "BUY_639138686323041396",
+    "order_id": "BUY_639138686056692567",
     "approved_by_client": true
   }
 }</pre>
@@ -1142,6 +1213,120 @@
 
     <tr>
       <td>32</td>
+      <td>Cerberus Observer</td>
+      <td><strong>Sensitive Client-Controlled Property</strong></td>
+      <td><span class="sev" style="background:#f59e0b">Medium</span></td>
+      <td>API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow</td>
+      <td><span class="badge badge-observed">OBSERVED</span></td>
+      <td><code>/vulnerable/transactions/finalize</code></td>
+    </tr>
+    <tr class="evidence-row">
+      <td colspan="7">
+        <details>
+          <summary>Evidencia técnica + mitigación</summary>
+          <pre>{
+  "method": "POST",
+  "path": "/vulnerable/transactions/finalize",
+  "detected_fields": [
+    "approved_by_client"
+  ],
+  "request_body": {
+    "order_id": "BUY_639138686062392717",
+    "approved_by_client": true
+  }
+}</pre>
+          <p><strong>Mitigación recomendada:</strong> Reject or ignore client-controlled sensitive fields such as credits, is_admin, role and approved_by_client.</p>
+        </details>
+      </td>
+    </tr>
+    
+
+    <tr>
+      <td>33</td>
+      <td>Cerberus Observer</td>
+      <td><strong>Client-Side Transaction Approval Attempt</strong></td>
+      <td><span class="sev" style="background:#dc2626">High</span></td>
+      <td>API6:2023 Unrestricted Access to Sensitive Business Flows</td>
+      <td><span class="badge badge-observed">OBSERVED</span></td>
+      <td><code>/vulnerable/transactions/finalize</code></td>
+    </tr>
+    <tr class="evidence-row">
+      <td colspan="7">
+        <details>
+          <summary>Evidencia técnica + mitigación</summary>
+          <pre>{
+  "method": "POST",
+  "path": "/vulnerable/transactions/finalize",
+  "request_body": {
+    "order_id": "BUY_639138686062392717",
+    "approved_by_client": true
+  }
+}</pre>
+          <p><strong>Mitigación recomendada:</strong> The backend must verify payment state server-side against Steam Web API or another trusted payment provider.</p>
+        </details>
+      </td>
+    </tr>
+    
+
+    <tr>
+      <td>34</td>
+      <td>Cerberus Observer</td>
+      <td><strong>Sensitive Client-Controlled Property</strong></td>
+      <td><span class="sev" style="background:#f59e0b">Medium</span></td>
+      <td>API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow</td>
+      <td><span class="badge badge-observed">OBSERVED</span></td>
+      <td><code>/vulnerable/transactions/finalize</code></td>
+    </tr>
+    <tr class="evidence-row">
+      <td colspan="7">
+        <details>
+          <summary>Evidencia técnica + mitigación</summary>
+          <pre>{
+  "method": "POST",
+  "path": "/vulnerable/transactions/finalize",
+  "detected_fields": [
+    "approved_by_client"
+  ],
+  "request_body": {
+    "order_id": "BUY_639138686323041396",
+    "approved_by_client": true
+  }
+}</pre>
+          <p><strong>Mitigación recomendada:</strong> Reject or ignore client-controlled sensitive fields such as credits, is_admin, role and approved_by_client.</p>
+        </details>
+      </td>
+    </tr>
+    
+
+    <tr>
+      <td>35</td>
+      <td>Cerberus Observer</td>
+      <td><strong>Client-Side Transaction Approval Attempt</strong></td>
+      <td><span class="sev" style="background:#dc2626">High</span></td>
+      <td>API6:2023 Unrestricted Access to Sensitive Business Flows</td>
+      <td><span class="badge badge-observed">OBSERVED</span></td>
+      <td><code>/vulnerable/transactions/finalize</code></td>
+    </tr>
+    <tr class="evidence-row">
+      <td colspan="7">
+        <details>
+          <summary>Evidencia técnica + mitigación</summary>
+          <pre>{
+  "method": "POST",
+  "path": "/vulnerable/transactions/finalize",
+  "request_body": {
+    "order_id": "BUY_639138686323041396",
+    "approved_by_client": true
+  }
+}</pre>
+          <p><strong>Mitigación recomendada:</strong> The backend must verify payment state server-side against Steam Web API or another trusted payment provider.</p>
+        </details>
+      </td>
+    </tr>
+    
+
+    <tr>
+      <td>36</td>
       <td>Cerberus Observer</td>
       <td><strong>Broken Object Level Authorization (BOLA)</strong></td>
       <td><span class="sev" style="background:#dc2626">High</span></td>
@@ -1167,7 +1352,7 @@
     
 
     <tr>
-      <td>33</td>
+      <td>37</td>
       <td>Cerberus Observer</td>
       <td><strong>Sensitive Client-Controlled Property</strong></td>
       <td><span class="sev" style="background:#f59e0b">Medium</span></td>
@@ -1197,7 +1382,7 @@
     
 
     <tr>
-      <td>34</td>
+      <td>38</td>
       <td>Cerberus Observer</td>
       <td><strong>Sensitive Client-Controlled Property</strong></td>
       <td><span class="sev" style="background:#f59e0b">Medium</span></td>
@@ -1227,7 +1412,7 @@
     
 
     <tr>
-      <td>35</td>
+      <td>39</td>
       <td>Cerberus Observer</td>
       <td><strong>Sensitive Client-Controlled Property</strong></td>
       <td><span class="sev" style="background:#f59e0b">Medium</span></td>
@@ -1257,7 +1442,7 @@
     
 
     <tr>
-      <td>36</td>
+      <td>40</td>
       <td>Cerberus Observer</td>
       <td><strong>Client-Side Transaction Approval Attempt</strong></td>
       <td><span class="sev" style="background:#dc2626">High</span></td>
@@ -1284,7 +1469,7 @@
     
 
     <tr>
-      <td>37</td>
+      <td>41</td>
       <td>Cerberus Observer</td>
       <td><strong>Sensitive Client-Controlled Property</strong></td>
       <td><span class="sev" style="background:#f59e0b">Medium</span></td>
@@ -1314,7 +1499,7 @@
     
 
     <tr>
-      <td>38</td>
+      <td>42</td>
       <td>Cerberus Observer</td>
       <td><strong>Broken Object Level Authorization (BOLA)</strong></td>
       <td><span class="sev" style="background:#dc2626">High</span></td>
@@ -1340,7 +1525,7 @@
     
 
     <tr>
-      <td>39</td>
+      <td>43</td>
       <td>Cerberus Observer</td>
       <td><strong>Sensitive Client-Controlled Property</strong></td>
       <td><span class="sev" style="background:#f59e0b">Medium</span></td>
@@ -1370,7 +1555,7 @@
     
 
     <tr>
-      <td>40</td>
+      <td>44</td>
       <td>Cerberus Observer</td>
       <td><strong>Sensitive Client-Controlled Property</strong></td>
       <td><span class="sev" style="background:#f59e0b">Medium</span></td>
@@ -1400,119 +1585,6 @@
     
 
     <tr>
-      <td>41</td>
-      <td>Cerberus Observer</td>
-      <td><strong>Sensitive Client-Controlled Property</strong></td>
-      <td><span class="sev" style="background:#f59e0b">Medium</span></td>
-      <td>API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow</td>
-      <td><span class="badge badge-observed">OBSERVED</span></td>
-      <td><code>/vulnerable/transactions/finalize</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Evidencia técnica + mitigación</summary>
-          <pre>{
-  "method": "POST",
-  "path": "/vulnerable/transactions/finalize",
-  "detected_fields": [
-    "approved_by_client"
-  ],
-  "request_body": {
-    "order_id": "ORDER_FRAUD_20f6be4e-e371-4c67-aaef-fc73b2393b93",
-    "approved_by_client": true
-  }
-}</pre>
-          <p><strong>Mitigación recomendada:</strong> Reject or ignore client-controlled sensitive fields such as credits, is_admin, role and approved_by_client.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td>42</td>
-      <td>Cerberus Observer</td>
-      <td><strong>Client-Side Transaction Approval Attempt</strong></td>
-      <td><span class="sev" style="background:#dc2626">High</span></td>
-      <td>API6:2023 Unrestricted Access to Sensitive Business Flows</td>
-      <td><span class="badge badge-observed">OBSERVED</span></td>
-      <td><code>/vulnerable/transactions/finalize</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Evidencia técnica + mitigación</summary>
-          <pre>{
-  "method": "POST",
-  "path": "/vulnerable/transactions/finalize",
-  "request_body": {
-    "order_id": "ORDER_FRAUD_20f6be4e-e371-4c67-aaef-fc73b2393b93",
-    "approved_by_client": true
-  }
-}</pre>
-          <p><strong>Mitigación recomendada:</strong> The backend must verify payment state server-side against Steam Web API or another trusted payment provider.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td>43</td>
-      <td>Cerberus Observer</td>
-      <td><strong>Sensitive Client-Controlled Property</strong></td>
-      <td><span class="sev" style="background:#f59e0b">Medium</span></td>
-      <td>API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow</td>
-      <td><span class="badge badge-observed">OBSERVED</span></td>
-      <td><code>/secure/transactions/finalize</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Evidencia técnica + mitigación</summary>
-          <pre>{
-  "method": "POST",
-  "path": "/secure/transactions/finalize",
-  "detected_fields": [
-    "approved_by_client"
-  ],
-  "request_body": {
-    "order_id": "ORDER_SECURE_b09cc06e-a74f-4674-85c1-25f10d008dae",
-    "approved_by_client": true
-  }
-}</pre>
-          <p><strong>Mitigación recomendada:</strong> Reject or ignore client-controlled sensitive fields such as credits, is_admin, role and approved_by_client.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td>44</td>
-      <td>Cerberus Observer</td>
-      <td><strong>Broken Object Level Authorization (BOLA)</strong></td>
-      <td><span class="sev" style="background:#dc2626">High</span></td>
-      <td>API1:2023 Broken Object Level Authorization</td>
-      <td><span class="badge badge-observed">OBSERVED</span></td>
-      <td><code>/vulnerable/inventory/{user_id}</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Evidencia técnica + mitigación</summary>
-          <pre>{
-  "method": "GET",
-  "path": "/vulnerable/inventory/edc000d7-80bb-47c4-8179-bec2491f717a",
-  "status_code": 200,
-  "authenticated_user_id": "99e4d323-bbec-4748-acbb-33a11e1ba2a8",
-  "requested_user_id": "edc000d7-80bb-47c4-8179-bec2491f717a"
-}</pre>
-          <p><strong>Mitigación recomendada:</strong> Validate that the requested user_id matches the authenticated user_id before returning inventory resources.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
       <td>45</td>
       <td>Cerberus Observer</td>
       <td><strong>Sensitive Client-Controlled Property</strong></td>
@@ -1532,7 +1604,7 @@
     "approved_by_client"
   ],
   "request_body": {
-    "order_id": "ORDER_FRAUD_135329ee-9a57-4c21-bb51-525fecb40f7e",
+    "order_id": "ORDER_FRAUD_20f6be4e-e371-4c67-aaef-fc73b2393b93",
     "approved_by_client": true
   }
 }</pre>
@@ -1559,7 +1631,7 @@
   "method": "POST",
   "path": "/vulnerable/transactions/finalize",
   "request_body": {
-    "order_id": "ORDER_FRAUD_135329ee-9a57-4c21-bb51-525fecb40f7e",
+    "order_id": "ORDER_FRAUD_20f6be4e-e371-4c67-aaef-fc73b2393b93",
     "approved_by_client": true
   }
 }</pre>
@@ -1589,7 +1661,7 @@
     "approved_by_client"
   ],
   "request_body": {
-    "order_id": "ORDER_SECURE_52593fd1-4d71-4bce-af6e-8320f8f8c755",
+    "order_id": "ORDER_SECURE_b09cc06e-a74f-4674-85c1-25f10d008dae",
     "approved_by_client": true
   }
 }</pre>
@@ -1601,6 +1673,119 @@
 
     <tr>
       <td>48</td>
+      <td>Cerberus Observer</td>
+      <td><strong>Broken Object Level Authorization (BOLA)</strong></td>
+      <td><span class="sev" style="background:#dc2626">High</span></td>
+      <td>API1:2023 Broken Object Level Authorization</td>
+      <td><span class="badge badge-observed">OBSERVED</span></td>
+      <td><code>/vulnerable/inventory/{user_id}</code></td>
+    </tr>
+    <tr class="evidence-row">
+      <td colspan="7">
+        <details>
+          <summary>Evidencia técnica + mitigación</summary>
+          <pre>{
+  "method": "GET",
+  "path": "/vulnerable/inventory/edc000d7-80bb-47c4-8179-bec2491f717a",
+  "status_code": 200,
+  "authenticated_user_id": "99e4d323-bbec-4748-acbb-33a11e1ba2a8",
+  "requested_user_id": "edc000d7-80bb-47c4-8179-bec2491f717a"
+}</pre>
+          <p><strong>Mitigación recomendada:</strong> Validate that the requested user_id matches the authenticated user_id before returning inventory resources.</p>
+        </details>
+      </td>
+    </tr>
+    
+
+    <tr>
+      <td>49</td>
+      <td>Cerberus Observer</td>
+      <td><strong>Sensitive Client-Controlled Property</strong></td>
+      <td><span class="sev" style="background:#f59e0b">Medium</span></td>
+      <td>API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow</td>
+      <td><span class="badge badge-observed">OBSERVED</span></td>
+      <td><code>/vulnerable/transactions/finalize</code></td>
+    </tr>
+    <tr class="evidence-row">
+      <td colspan="7">
+        <details>
+          <summary>Evidencia técnica + mitigación</summary>
+          <pre>{
+  "method": "POST",
+  "path": "/vulnerable/transactions/finalize",
+  "detected_fields": [
+    "approved_by_client"
+  ],
+  "request_body": {
+    "order_id": "ORDER_FRAUD_135329ee-9a57-4c21-bb51-525fecb40f7e",
+    "approved_by_client": true
+  }
+}</pre>
+          <p><strong>Mitigación recomendada:</strong> Reject or ignore client-controlled sensitive fields such as credits, is_admin, role and approved_by_client.</p>
+        </details>
+      </td>
+    </tr>
+    
+
+    <tr>
+      <td>50</td>
+      <td>Cerberus Observer</td>
+      <td><strong>Client-Side Transaction Approval Attempt</strong></td>
+      <td><span class="sev" style="background:#dc2626">High</span></td>
+      <td>API6:2023 Unrestricted Access to Sensitive Business Flows</td>
+      <td><span class="badge badge-observed">OBSERVED</span></td>
+      <td><code>/vulnerable/transactions/finalize</code></td>
+    </tr>
+    <tr class="evidence-row">
+      <td colspan="7">
+        <details>
+          <summary>Evidencia técnica + mitigación</summary>
+          <pre>{
+  "method": "POST",
+  "path": "/vulnerable/transactions/finalize",
+  "request_body": {
+    "order_id": "ORDER_FRAUD_135329ee-9a57-4c21-bb51-525fecb40f7e",
+    "approved_by_client": true
+  }
+}</pre>
+          <p><strong>Mitigación recomendada:</strong> The backend must verify payment state server-side against Steam Web API or another trusted payment provider.</p>
+        </details>
+      </td>
+    </tr>
+    
+
+    <tr>
+      <td>51</td>
+      <td>Cerberus Observer</td>
+      <td><strong>Sensitive Client-Controlled Property</strong></td>
+      <td><span class="sev" style="background:#f59e0b">Medium</span></td>
+      <td>API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow</td>
+      <td><span class="badge badge-observed">OBSERVED</span></td>
+      <td><code>/secure/transactions/finalize</code></td>
+    </tr>
+    <tr class="evidence-row">
+      <td colspan="7">
+        <details>
+          <summary>Evidencia técnica + mitigación</summary>
+          <pre>{
+  "method": "POST",
+  "path": "/secure/transactions/finalize",
+  "detected_fields": [
+    "approved_by_client"
+  ],
+  "request_body": {
+    "order_id": "ORDER_SECURE_52593fd1-4d71-4bce-af6e-8320f8f8c755",
+    "approved_by_client": true
+  }
+}</pre>
+          <p><strong>Mitigación recomendada:</strong> Reject or ignore client-controlled sensitive fields such as credits, is_admin, role and approved_by_client.</p>
+        </details>
+      </td>
+    </tr>
+    
+
+    <tr>
+      <td>52</td>
       <td>Cerberus Observer</td>
       <td><strong>Broken Object Level Authorization (BOLA)</strong></td>
       <td><span class="sev" style="background:#dc2626">High</span></td>
@@ -1638,7 +1823,7 @@ new Chart(document.getElementById('sevChart'), {
   data: {
     labels: ['High', 'Critical', 'Medium'],
     datasets: [{
-      data: [22, 5, 21],
+      data: [24, 7, 21],
       backgroundColor: ['#dc2626', '#7c2d12', '#f59e0b']
     }]
   },
@@ -1651,7 +1836,7 @@ new Chart(document.getElementById('catChart'), {
     labels: ['API1:2023 Broken Object Level Authorization', 'API3:2023 Broken Object Property Level Authorization', 'API2:2023 Broken Authentication', 'API6:2023 Unrestricted Access to Sensitive Business Flows', 'API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow'],
     datasets: [{
       label: 'Hallazgos',
-      data: [9, 2, 2, 14, 21],
+      data: [10, 3, 3, 15, 21],
       backgroundColor: '#1e40af'
     }]
   },
