@@ -9,8 +9,8 @@ public class ApiClient : MonoBehaviour
     public static ApiClient Instance { get; private set; }
 
     [Header("Backend")]
-    [Tooltip("Backend del lab. Ej: http://localhost:8080 o http://192.168.0.103:8080")]
-    public string baseUrl = "http://localhost:8080";
+    [Tooltip("Backend del lab. Ej: http://192.168.0.103:8080 o http://192.168.0.103:8080")]
+    public string baseUrl = "http://192.168.0.103:8080";
 
     public string AccessToken { get; private set; }
     public string UserId { get; private set; }
