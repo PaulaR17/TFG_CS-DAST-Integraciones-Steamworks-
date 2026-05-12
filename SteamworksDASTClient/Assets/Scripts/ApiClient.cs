@@ -9,13 +9,38 @@ public class ApiClient : MonoBehaviour
     public static ApiClient Instance { get; private set; }
 
     [Header("Backend")]
-    [Tooltip("Backend del lab. Ej: http://localhost:8080 o http://192.168.0.103:8080")]
+    [Tooltip("Backend del lab. Ej: http://localhost:8080 o http://localhost:8080")]
     public string baseUrl = "http://localhost:8080";
+    //[Tooltip("Backend del lab. Ej: http://192.168.0.103:8080 o http://192.168.0.103:8080")]
+    //public string baseUrl = "http://192.168.0.103:8080";
 
     public string AccessToken { get; private set; }
     public string UserId { get; private set; }
     public string Username { get; private set; }
     public int Credits { get; private set; }
+
+    // ---- Modificadores locales de credits (para feedback inmediato del HUD) ----
+    // El backend solo se entera de los credits al hacer login o GetUserMe.
+    // Estos metodos NO llaman a la API: actualizan el estado local del cliente.
+
+    /// <summary>
+    /// Suma credits al saldo local (p. ej. recompensa por matar enemigo).
+    /// No persiste en backend; usa SyncCreditsToBackend() si quieres reflejarlo.
+    /// </summary>
+    public void AddLocalCredits(int amount)
+    {
+        if (amount <= 0) return;
+        Credits += amount;
+    }
+
+    /// <summary>
+    /// Resta credits del saldo local sin bajar de 0.
+    /// </summary>
+    public void DeductLocalCredits(int amount)
+    {
+        if (amount <= 0) return;
+        Credits = Mathf.Max(0, Credits - amount);
+    }
 
     void Awake()
     {
@@ -90,11 +115,11 @@ public class ApiClient : MonoBehaviour
     }
 
     // ---------- ACHIEVEMENTS ----------
-    [Serializable] private class UnlockReq { public string achievement_code; } // <-- Cambio aquí
+    [Serializable] private class UnlockReq { public string achievement_code; } // <-- Cambio aquï¿½
 
     public void UnlockAchievement(string achievementCode, Action onSuccess, Action<string> onError)
     {
-        // <-- Cambio aquí abajo también
+        // <-- Cambio aquï¿½ abajo tambiï¿½n
         var body = JsonUtility.ToJson(new UnlockReq { achievement_code = achievementCode });
         StartCoroutine(PostJson("/achievements/unlock", body, true,
             (json) => { Debug.Log($"[API] Achievement unlocked: {achievementCode}"); onSuccess?.Invoke(); },
@@ -113,14 +138,14 @@ public class ApiClient : MonoBehaviour
     }
 
     // ---------- TRANSACTIONS ----------
-    [Serializable] private class InitTxReq { public string order_id; public string item_name; public int amount; } // <-- Añadido order_id
+    [Serializable] private class InitTxReq { public string order_id; public string item_name; public int amount; } // <-- Aï¿½adido order_id
     [Serializable] private class InitTxRes { public string id; public string order_id; }
     [Serializable] private class FinalizeTxReq { public string order_id; public bool approved_by_client; }
 
     public void InitTransaction(string itemName, int amount,
                                 Action<string> onSuccess, Action<string> onError)
     {
-        // Generamos el ID de la orden en el cliente, igual que hacías antes
+        // Generamos el ID de la orden en el cliente, igual que hacï¿½as antes
         string generatedOrderId = "BUY_" + System.DateTime.Now.Ticks;
 
         // Lo metemos en el JSON
@@ -134,7 +159,7 @@ public class ApiClient : MonoBehaviour
         }, onError));
     }
 
-    // OJO: usamos el endpoint VULNERABLE a propósito (cliente "ingenuo").
+    // OJO: usamos el endpoint VULNERABLE a propï¿½sito (cliente "ingenuo").
     // Esto es coherente con el TFG: el atacante en W2 explota el mismo endpoint.
     public void FinalizeTransaction(string orderId, Action onSuccess, Action<string> onError)
     {

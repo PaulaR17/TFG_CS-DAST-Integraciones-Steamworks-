@@ -18,8 +18,10 @@ from typing import Any, Dict, Optional
 from mitmproxy import http
 
 
-#archivos de salida dentro del contenedor
-REPORTS_DIR = Path("/app/reports")
+#archivos de salida dentro del contenedor.
+#el volumen del compose monta el host ../reports en /home/mitmproxy/reports.
+#tiene que coincidir para que los hallazgos persistan en el host (lab/reports/).
+REPORTS_DIR = Path("/home/mitmproxy/reports")
 FINDINGS_FILE = REPORTS_DIR / "cerberus_findings.jsonl"
 STARTUP_CHECK_FILE = REPORTS_DIR / "cerberus_startup_check.txt"
 
@@ -247,8 +249,13 @@ def response(flow: http.HTTPFlow) -> None:
 
     print(f"[CERBERUS RESPONSE] {method} {path} -> {status_code}")
 
-    #aprendo token -> user_id leyendo la respuesta del login
-    if method == "POST" and path == "/auth/login" and status_code == 200:
+    #aprendo token -> user_id leyendo la respuesta del login.
+    #observo los dos endpoints de login que usa el laboratorio:
+    # - /auth/login : login clasico con ticket sintetico (suite de ataques)
+    # - /auth/steam_login : login para el cliente Unity con Steamworks.NET
+    #si solo escuchara /auth/login, cerberus no sabria correlacionar el trafico
+    #del cliente Unity y perderia toda la deteccion stateful durante una partida real.
+    if method == "POST" and path in ("/auth/login", "/auth/steam_login") and status_code == 200:
         response_body = parse_json_response(flow)
 
         if response_body is None:
@@ -263,7 +270,7 @@ def response(flow: http.HTTPFlow) -> None:
             TOKEN_TO_USERNAME[access_token] = username if isinstance(username, str) else "unknown"
 
             print(
-                f"[CERBERUS] Learned authenticated session: "
+                f"[CERBERUS] Learned authenticated session ({path}): "
                 f"user_id={user_id}, username={username}"
             )
 

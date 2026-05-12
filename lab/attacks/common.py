@@ -4,28 +4,28 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any
-
 import httpx
 
 
 #configuracion basica del laboratorio
 
-#aqui decido si los ataques van directos al backend o pasan antes por mitmproxy
-#modo directo: attacks/*.py -> http://localhost:8000
-#modo proxy: attacks/*.py -> mitmproxy:8080 -> http://api:8000
-#para usar proxy se lanza con dast_use_proxy=1
-#en docker el backend se llama "api", por eso la url cambia en modo proxy
+#decido si los ataques van directos al backend (puerto 8000) o pasan por mitmproxy (8080).
+#para que cerberus VEA los ataques, tienen que pasar por el proxy (puerto 8080),
+#porque cerberus es un addon de mitmproxy, no del backend.
+#por defecto apunto al proxy local: asi una ejecucion en limpio (sin variables de
+#entorno) ya hace lo correcto para una demo en local.
+#
+#si en algun momento se vuelve al lab fisico (192.168.0.103) basta con exportar:
+#   DAST_BASE_URL=http://192.168.0.103:8080
 USE_PROXY = os.getenv("DAST_USE_PROXY", "0") == "1"
 
 BASE_URL = os.getenv(
     "DAST_BASE_URL",
-    #"http://192.168.0.103:8000" if USE_PROXY else "http://192.168.0.103:8000"
-    "http://localhost:8080" if USE_PROXY else "http://localhost:8080"
+    "http://localhost:8080"
 )
 
 PROXY_URL = os.getenv(
     "DAST_PROXY_URL",
-    #"http://192.168.0.103:8080"
     "http://localhost:8080"
 )
 

@@ -1,15 +1,9 @@
-"""
-DAST Dashboard v2 — TUI rica para el laboratorio Steamworks DAST.
-Paula Romero Gallart · TFG · UEM 2025/2026
-"""
-
 import json
 import subprocess
 import sys
 import webbrowser
 from datetime import datetime
 from pathlib import Path
-
 import httpx
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical, Container
@@ -25,30 +19,30 @@ REPORTING_SCRIPT = ROOT / "reporting" / "generate_html_report.py"
 FINDINGS_FILE = REPORTS_DIR / "findings.jsonl"
 CERBERUS_FILE = REPORTS_DIR / "cerberus_findings.jsonl"
 
-BACKEND_URL = "http://localhost:8080"
-PROXY_URL = "http://localhost:8081"
+BACKEND_URL = "http://192.168.0.103:8080"
+PROXY_URL   = "http://192.168.0.103:8081"
 
 ATTACKS = [
-    ("1", "BOLA",          "bola_attack.py",                 "#ef4444"),
-    ("2", "BOPLA",         "bopla_attack.py",                "#f59e0b"),
-    ("3", "Weak Token",    "weak_token_impersonation.py",    "#a855f7"),
-    ("4", "Tx Fraud",      "transaction_fraud_attack.py",    "#06b6d4"),
-    ("5", "RUN ALL",       "run_all_attacks.py",             "#10b981"),
+    ("1", "BOLA","bola_attack.py","#ef4444"),
+    ("2", "BOPLA","bopla_attack.py","#f59e0b"),
+    ("3", "Weak Token","weak_token_impersonation.py","#a855f7"),
+    ("4", "Tx Fraud","transaction_fraud_attack.py","#06b6d4"),
+    ("5", "RUN ALL","run_all_attacks.py","#10b981"),
 ]
 
 SEVERITY_COLORS = {
-    "Critical": "bold #b91c1c",
-    "High":     "bold #ef4444",
-    "Medium":   "bold #f59e0b",
-    "Low":      "bold #10b981",
-    "Info":     "bold #3b82f6",
+    "Critical":"bold #b91c1c",
+    "High":"bold #ef4444",
+    "Medium":"bold #f59e0b",
+    "Low":"bold #10b981",
+    "Info":"bold #3b82f6",
 }
 
 
 class StatusPanel(Static):
     backend_ok = reactive(False)
-    proxy_ok   = reactive(False)
-    db_ok      = reactive(True)
+    proxy_ok= reactive(False)
+    db_ok= reactive(True)
 
     def render(self):
         def led(ok):

@@ -20,6 +20,10 @@ public class GameManager : MonoBehaviour
     [Header("Player")]
     public GameObject player;
 
+    [Header("Rewards")]
+    [Tooltip("Cuantos credits gana el jugador por cada enemigo eliminado.")]
+    public int creditsPerKill = 5;
+
     private int score = 0;
     private int health = 3;
     private bool achievement100Unlocked = false;
@@ -41,7 +45,7 @@ public class GameManager : MonoBehaviour
         string steamId = SteamUser.GetSteamID().ToString();
         string personaName = SteamFriends.GetPersonaName();
 
-        // Enviamos ambos parámetros al backend
+        // Enviamos ambos parï¿½metros al backend
         ApiClient.Instance.SteamLogin(steamId, personaName,
             onSuccess: () =>
             {
@@ -66,7 +70,7 @@ public class GameManager : MonoBehaviour
 
     public void OnBackToMenu()
     {
-        Debug.Log("[GM] Volviendo al menú...");
+        Debug.Log("[GM] Volviendo al menï¿½...");
         SceneManager.LoadScene("MainMenu");
     }
 
@@ -74,6 +78,12 @@ public class GameManager : MonoBehaviour
     {
         if (isGameOver) return;
         score += amount;
+
+        // Recompensa de credits por kill (feedback inmediato, sin llamar al backend).
+        // El saldo persistente del backend se actualiza solo en login/purchase.
+        if (ApiClient.Instance != null && creditsPerKill > 0)
+            ApiClient.Instance.AddLocalCredits(creditsPerKill);
+
         UpdateHUD();
 
         if (!achievement100Unlocked && score >= 100)
@@ -88,7 +98,7 @@ public class GameManager : MonoBehaviour
     public void OnPickupPowerUp(string itemName, string quality)
     {
         ApiClient.Instance.AddItemToInventory(itemName, quality,
-            () => Debug.Log("[GM] Item añadido al inventario"),
+            () => Debug.Log("[GM] Item aï¿½adido al inventario"),
             (err) => Debug.LogError("[GM] AddItem error: " + err));
     }
 
@@ -121,8 +131,15 @@ public class GameManager : MonoBehaviour
 
     public void OnPurchaseSuccess(int cost)
     {
-        ApiClient.Instance.GetUserMe((c) => UpdateHUD(),
-                                     (err) => Debug.LogError(err));
+        // OJO: el backend /vulnerable/transactions/finalize es la vulnerabilidad
+        // intencionada del TFG: al confiar en approved_by_client=true, en lugar
+        // de descontar credits, los SUMA al usuario. Para que el HUD refleje
+        // la misma logica vulnerable del backend (y para no perder los credits
+        // que el jugador ha ganado matando enemigos), sumamos localmente
+        // sin volver a hacer GetUserMe.
+        if (ApiClient.Instance != null && cost > 0)
+            ApiClient.Instance.AddLocalCredits(cost);
+        UpdateHUD();
     }
 
     private void UpdateHUD()

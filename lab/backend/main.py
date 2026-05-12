@@ -136,6 +136,19 @@ def steam_login(
             "persona_name": payload.persona_name,
             "user_id": str(user.id)
         })
+    else:
+        # Reset de credits al saldo inicial (100) en cada login Steam.
+        # Esto simula el "restart" del juego: cada sesion empieza con el mismo saldo.
+        # No afecta a los ataques contra /auth/login porque ese flujo usa otros usuarios.
+        if int(getattr(user, "credits")) != 100:
+            setattr(user, "credits", 100)
+            db.commit()
+            db.refresh(user)
+            write_audit_log("steam_credits_reset_on_login", {
+                "steam_id": payload.steam_id,
+                "user_id": str(user.id),
+                "reset_to": 100
+            })
 
     # Genero el mismo tipo de token débil que el login normal
     # (mantenemos la vulnerabilidad intencional en weak token para que sea auditable)
