@@ -4,7 +4,6 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any
-
 import httpx
 
 
@@ -19,14 +18,14 @@ USE_PROXY = os.getenv("DAST_USE_PROXY", "0") == "1"
 
 BASE_URL = os.getenv(
     "DAST_BASE_URL",
-    #"http://192.168.0.103:8000" if USE_PROXY else "http://192.168.0.103:8000"
-    "http://localhost:8080" if USE_PROXY else "http://localhost:8080"
+    "http://192.168.0.103:8000" if USE_PROXY else "http://192.168.0.103:8000"
+    #"http://localhost:8080" if USE_PROXY else "http://localhost:8080"
 )
 
 PROXY_URL = os.getenv(
     "DAST_PROXY_URL",
-    #"http://192.168.0.103:8080"
-    "http://localhost:8080"
+    "http://192.168.0.103:8080"
+    #"http://localhost:8080"
 )
 
 
