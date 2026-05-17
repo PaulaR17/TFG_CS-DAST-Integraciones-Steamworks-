@@ -25,6 +25,33 @@ Laboratorio reproducible para auditar vulnerabilidades lógicas (BOLA, BOPLA, we
 
 ---
 
+## Las dos capas: *active suite* vs *Cerberus passive*
+
+Resumen en una línea: **la suite activa ataca, Cerberus observa**.
+
+| | **Active suite** (`lab/attacks/*.py`) | **Cerberus passive** (`lab/proxy/addon.py`) |
+|---|---|---|
+| Rol | Pentester automatizado | SIEM / IDS con estado |
+| Tráfico que genera | Peticiones maliciosas dirigidas | Ninguna — solo observa el tráfico que pasa por mitmproxy |
+| Cómo decide | Compara respuesta del endpoint vulnerable vs el seguro | Aprende `token → user_id` en `/auth/login` y correlaciona con peticiones posteriores |
+| Qué confirma | Las 4 vulnerabilidades del lab (BOLA, BOPLA, weak auth, tx fraud) | BOLA (con certeza, por correlación) + observaciones de campos sensibles |
+| Fichero | `lab/reports/findings.jsonl` | `lab/reports/cerberus_findings.jsonl` |
+
+**Por qué importa esta división**
+
+Las cuatro vulnerabilidades se podrían validar con la suite activa sola — es el *ground truth*. Lo diferencial es **Cerberus**: demuestra que un proxy con estado puede detectar la categoría más crítica del OWASP API Top 10 (BOLA) **sin necesidad de atacar**, viendo solo tráfico legítimo. Eso es exactamente lo que ZAP en modo *Automated Scan* **no** hace — la comparación empírica está en la memoria, sección 4.6.10, y se resume en la tabla de [Resultados clave](#resultados-clave).
+
+**Confirmed vs observed**
+
+Cerberus separa los hallazgos en dos niveles para no inflar artificialmente el conteo:
+
+- `confirmed` → impacto demostrado (acceso cruzado a inventario ajeno con `200 OK`).
+- `observed`  → patrón sospechoso en la request (campos `credits`, `is_admin`, `approved_by_client` controlados por el cliente), todavía sin prueba de impacto.
+
+Por eso en una sesión de tráfico exclusivamente legítimo del cliente Unity (Fase A) Cerberus levanta 14 `observed` y **0 `confirmed`**: el flujo normal de la tienda Steamworks envía `approved_by_client=true`, lo cual es señal pero no vulnerabilidad por sí mismo.
+
+---
+
 ## Arquitectura
 
 ```
