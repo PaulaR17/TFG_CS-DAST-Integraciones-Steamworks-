@@ -85,32 +85,45 @@ Para cada una existe un endpoint `/secure/...` paralelo que muestra la mitigaci�
 
 ## Cómo correrlo (Quickstart)
 
-**Requisitos**: Docker Desktop, Python 3.12, opcionalmente Unity 2022.3 LTS + Steam abierto.
+**Requisitos**: Docker (Desktop o Engine + compose plugin), Python 3.12, opcionalmente Unity 2022.3 LTS + Steam abierto.
 
 ```bash
 # 1. Levantar el laboratorio
 cd lab/infra
 docker compose up -d --build
 # API tras el proxy en http://localhost:8080
-# mitmweb en http://localhost:8081 (password: tfg2026)
-
-# 2. Lanzar la suite completa de ataques
+# mitmweb         en http://localhost:8081  (password: tfg2026)
 cd ../..
-python -m venv .venv
-.venv\Scripts\activate     # Linux/Mac: source .venv/bin/activate
-pip install httpx
+
+# 2. Crear entorno Python y dependencias
+python3 -m venv .venv
+source .venv/bin/activate       # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+
+# 3. Lanzar la suite completa de ataques
 python lab/attacks/run_all_attacks.py
 # Resultado esperado: Confirmed findings: 4/4
 
-# 3. Generar informe HTML
+# 4. Generar informe HTML
 python reporting/generate_html_report.py
-# Abre lab/reports/audit_report.html
+# Abre lab/reports/audit_report.html  (Ctrl+P -> Guardar como PDF)
 
-# 4. (Opcional) Dashboard TUI
-cd app/tui
-pip install -r requirements.txt
-python dast_dashboard.py
+# 5. (Opcional) Dashboard TUI
+pip install -r app/tui/requirements.txt
+python app/tui/dast_dashboard.py
 ```
+
+### Variables de entorno opcionales
+
+| Variable | Por defecto | Cuándo cambiarla |
+|---|---|---|
+| `DAST_BASE_URL`            | `http://localhost:8080`     | Lab Minerva u otro host (`http://192.168.0.103:8080`) |
+| `DAST_USE_PROXY`           | `0`                          | Forzar `httpx` a usar PROXY_URL explícito |
+| `DASHBOARD_BACKEND_URL`    | `http://localhost:8080`     | Apuntar el dashboard TUI a un backend remoto |
+| `DASHBOARD_PROXY_URL`      | `http://localhost:8081`     | Apuntar el dashboard TUI a mitmweb remoto |
+| `DASHBOARD_DB_CONTAINER`   | `tfg_db`                     | Renombrar contenedor PostgreSQL |
+| `DASHBOARD_DB_USER`        | `paula`                      | Cambiar usuario PostgreSQL |
+| `DASHBOARD_DB_NAME`        | `tfg_game_db`                | Cambiar nombre de base de datos |
 
 Los hallazgos se acumulan en:
 - `lab/reports/findings.jsonl` — capa activa (suite de ataques)

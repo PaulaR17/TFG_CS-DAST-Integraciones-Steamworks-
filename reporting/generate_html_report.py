@@ -1,29 +1,55 @@
 """
-Generador de informe HTML autocontenido para auditoría DAST.
-Lee findings.jsonl y cerberus_findings.jsonl y produce un HTML
-con resumen ejecutivo, gráficos y tabla de hallazgos.
+Self-contained HTML report generator for the stateful DAST audit lab.
+
+Reads findings.jsonl (active suite) and cerberus_findings.jsonl (passive
+observer) and produces a single HTML file with an executive summary, charts
+(Chart.js via CDN) and a detailed finding table. Output is meant for both
+browser viewing and Ctrl+P -> "Save as PDF".
 """
 
+from __future__ import annotations
+
 import json
-from datetime import datetime
-from pathlib import Path
 from collections import Counter
+from datetime import datetime
+from html import escape
+from pathlib import Path
+from typing import Any
 
 REPORTS_DIR = Path(__file__).resolve().parent.parent / "lab" / "reports"
 OUTPUT_FILE = REPORTS_DIR / "audit_report.html"
 
 SEVERITY_COLORS = {
-    "Critical": "#7c2d12",
-    "High": "#dc2626",
-    "Medium": "#f59e0b",
-    "Low": "#10b981",
-    "Info": "#3b82f6",
+    "Critical": "#7f1d1d",
+    "High":     "#dc2626",
+    "Medium":   "#d97706",
+    "Low":      "#16a34a",
+    "Info":     "#2563eb",
 }
 
+SEVERITY_ORDER = ["Critical", "High", "Medium", "Low", "Info"]
 
-def load_findings():
-    findings = []
-    for fname in ("findings.jsonl", "cerberus_findings.jsonl"):
+PROJECT_TITLE = "Steamworks DAST Lab — Technical Audit Report"
+PROJECT_SUBTITLE = (
+    "Stateful DAST methodology for auditing Steamworks integrations"
+)
+PROJECT_AUTHOR = "Paula Romero Gallart"
+PROJECT_INST = (
+    "Universidad Europea de Madrid — "
+    "Double Degree in Video Game Design and Computer Engineering"
+)
+PROJECT_DIRECTOR = "Project director: José Javier Ruiz Cobo"
+
+
+# ---------- load ----------
+
+def load_findings() -> list[dict[str, Any]]:
+    findings: list[dict[str, Any]] = []
+    sources = (
+        ("findings.jsonl",          "Active suite"),
+        ("cerberus_findings.jsonl", "Cerberus (passive)"),
+    )
+    for fname, label in sources:
         fpath = REPORTS_DIR / fname
         if not fpath.exists():
             continue
@@ -34,212 +60,535 @@ def load_findings():
                     continue
                 try:
                     data = json.loads(line)
-                    data["_source"] = "Active Attack" if fname == "findings.jsonl" else "Cerberus Observer"
-                    findings.append(data)
                 except json.JSONDecodeError:
-                    pass
+                    continue
+                data["_source"] = label
+                findings.append(data)
     return findings
 
 
-def stats(findings):
-    sev = Counter(f.get("severity", "Info") for f in findings)
-    cat = Counter(f.get("owasp_category", "Unknown") for f in findings)
-    status = Counter(f.get("status", "observed") for f in findings)
-    return {"severity": sev, "category": cat, "status": status}
+def status_of(f: dict[str, Any]) -> str:
+    """Normalises 'confirmed'/'observed' status across formats.
+
+    The active suite and the Cerberus addon both use a boolean ``confirmed``
+    field; older payloads use ``status``. We handle all three cases.
+    """
+    if "confirmed" in f:
+        return "confirmed" if f["confirmed"] else "observed"
+    return str(f.get("status", "observed")).lower()
 
 
-def render_finding_row(idx, f):
+def stats(findings: list[dict[str, Any]]) -> dict[str, Counter]:
+    return {
+        "severity": Counter(f.get("severity", "Info") for f in findings),
+        "category": Counter(f.get("owasp_category", "Unknown") for f in findings),
+        "status":   Counter(status_of(f) for f in findings),
+        "source":   Counter(f.get("_source", "Unknown") for f in findings),
+    }
+
+
+# ---------- HTML helpers ----------
+
+def fmt_evidence(evidence: Any) -> str:
+    try:
+        return escape(json.dumps(evidence, indent=2, ensure_ascii=False))
+    except Exception:
+        return escape(str(evidence))
+
+
+def render_row(idx: int, f: dict[str, Any]) -> str:
     sev = f.get("severity", "Info")
-    sev_color = SEVERITY_COLORS.get(sev, "#6b7280")
-    status = f.get("status", "observed")
-    status_badge = (
-        f'<span class="badge badge-confirmed">CONFIRMED</span>'
-        if status.lower() == "confirmed"
-        else f'<span class="badge badge-observed">OBSERVED</span>'
-    )
-    evidence_json = json.dumps(f.get("evidence", {}), indent=2, ensure_ascii=False)
+    sev_color = SEVERITY_COLORS.get(sev, "#64748b")
+    status = status_of(f)
+    badge_class = "badge--confirmed" if status == "confirmed" else "badge--observed"
+    status_label = status.upper()
+
     return f"""
     <tr>
-      <td>{idx}</td>
-      <td>{f.get("_source", "")}</td>
-      <td><strong>{f.get("vulnerability", "Unknown")}</strong></td>
-      <td><span class="sev" style="background:{sev_color}">{sev}</span></td>
-      <td>{f.get("owasp_category", "")}</td>
-      <td>{status_badge}</td>
-      <td><code>{f.get("endpoint", "")}</code></td>
+      <td class="num">{idx}</td>
+      <td><span class="source">{escape(str(f.get("_source", "")))}</span></td>
+      <td><strong>{escape(str(f.get("vulnerability", "Unknown")))}</strong></td>
+      <td><span class="sev" style="background:{sev_color}">{escape(sev)}</span></td>
+      <td class="owasp">{escape(str(f.get("owasp_category", "")))}</td>
+      <td><span class="badge {badge_class}">{status_label}</span></td>
+      <td><code>{escape(str(f.get("endpoint", "")))}</code></td>
     </tr>
     <tr class="evidence-row">
       <td colspan="7">
         <details>
-          <summary>Evidencia técnica + mitigación</summary>
-          <pre>{evidence_json}</pre>
-          <p><strong>Mitigación recomendada:</strong> {f.get("mitigation", "Ver memoria.")}</p>
+          <summary>Technical evidence &amp; mitigation</summary>
+          <pre>{fmt_evidence(f.get("evidence", {}))}</pre>
+          <p class="mitigation"><strong>Mitigation:</strong> {escape(str(f.get("mitigation", "See thesis.")))}</p>
         </details>
       </td>
     </tr>
     """
 
 
-def build_html(findings):
+# ---------- page ----------
+
+def build_html(findings: list[dict[str, Any]]) -> str:
     s = stats(findings)
-    confirmed = s["status"].get("confirmed", 0) + s["status"].get("Confirmed", 0)
-    observed = sum(s["status"].values()) - confirmed
     total = len(findings)
+    confirmed = s["status"].get("confirmed", 0)
+    observed = total - confirmed
+    n_categories = len(s["category"])
 
-    sev_data = [{"label": k, "value": v, "color": SEVERITY_COLORS.get(k, "#6b7280")}
-                for k, v in s["severity"].items()]
-    cat_data = list(s["category"].items())
+    sev_labels = [k for k in SEVERITY_ORDER if k in s["severity"]]
+    sev_values = [s["severity"][k] for k in sev_labels]
+    sev_colors = [SEVERITY_COLORS.get(k, "#64748b") for k in sev_labels]
 
-    rows = "\n".join(render_finding_row(i + 1, f) for i, f in enumerate(findings))
+    cat_items = s["category"].most_common()
+    cat_labels = [c[0] for c in cat_items]
+    cat_values = [c[1] for c in cat_items]
+
+    rows = "\n".join(render_row(i + 1, f) for i, f in enumerate(findings))
     generated = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     return f"""<!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Steamworks DAST Lab — Technical Audit Report</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{escape(PROJECT_TITLE)}</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
+  :root {{
+    --ink:        #0f172a;
+    --ink-soft:   #475569;
+    --muted:      #94a3b8;
+    --surface:    #f8fafc;
+    --panel:      #ffffff;
+    --border:     #e2e8f0;
+    --accent:     #2563eb;
+    --accent-dim: #1d4ed8;
+    --ok:         #16a34a;
+    --warn:       #d97706;
+    --err:        #dc2626;
+  }}
+
   * {{ box-sizing: border-box; }}
-  body {{ font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0;
-         background: #f3f4f6; color: #111827; }}
-  header {{ background: linear-gradient(135deg, #1e3a8a, #1e40af); color: white;
-           padding: 2.5rem 3rem; }}
-  header h1 {{ margin: 0; font-size: 2rem; }}
-  header p {{ margin: 0.5rem 0 0; opacity: 0.85; }}
-  main {{ max-width: 1200px; margin: 2rem auto; padding: 0 2rem; }}
-  section {{ background: white; border-radius: 8px; padding: 2rem;
-            margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }}
-  h2 {{ margin-top: 0; color: #1e40af; border-bottom: 2px solid #e5e7eb;
-        padding-bottom: 0.5rem; }}
-  .grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }}
-  .metric {{ background: #f9fafb; border-left: 4px solid #1e40af;
-             padding: 1rem; border-radius: 4px; }}
-  .metric .num {{ font-size: 2.2rem; font-weight: 700; color: #1e40af; }}
-  .metric .label {{ font-size: 0.85rem; color: #6b7280; text-transform: uppercase; }}
-  .charts {{ display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;
-             margin-top: 1rem; }}
-  .chart-box {{ background: #f9fafb; padding: 1rem; border-radius: 6px; }}
-  table {{ width: 100%; border-collapse: collapse; font-size: 0.9rem; }}
-  th, td {{ padding: 0.75rem; text-align: left; border-bottom: 1px solid #e5e7eb; }}
-  th {{ background: #1e40af; color: white; font-weight: 600; }}
-  .sev {{ display: inline-block; padding: 2px 10px; border-radius: 4px;
-          color: white; font-size: 0.8rem; font-weight: 600; }}
-  .badge {{ display: inline-block; padding: 2px 8px; border-radius: 4px;
-            font-size: 0.75rem; font-weight: 600; }}
-  .badge-confirmed {{ background: #dc2626; color: white; }}
-  .badge-observed {{ background: #f59e0b; color: white; }}
-  code {{ background: #1f2937; color: #fbbf24; padding: 2px 6px;
-          border-radius: 3px; font-size: 0.85rem; }}
-  pre {{ background: #1f2937; color: #e5e7eb; padding: 1rem;
-         border-radius: 4px; overflow-x: auto; font-size: 0.8rem; }}
-  details {{ margin-top: 0.5rem; }}
-  summary {{ cursor: pointer; color: #1e40af; font-weight: 600; }}
-  .evidence-row td {{ background: #f9fafb; }}
-  footer {{ text-align: center; padding: 2rem; color: #6b7280; font-size: 0.85rem; }}
+  html, body {{
+    margin: 0; padding: 0;
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--surface);
+    color: var(--ink);
+    line-height: 1.55;
+  }}
+
+  /* ---------- header ---------- */
+  header.report-header {{
+    background:
+      radial-gradient(circle at 95% 10%, rgba(37,99,235,0.35), transparent 55%),
+      linear-gradient(120deg, #0f172a 0%, #1e293b 60%, #1e3a8a 100%);
+    color: #f8fafc;
+    padding: 2.5rem 3rem 2.25rem;
+  }}
+  .report-header .eyebrow {{
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.72rem;
+    color: #bfdbfe;
+    margin-bottom: 0.5rem;
+  }}
+  .report-header h1 {{
+    margin: 0;
+    font-size: 1.85rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }}
+  .report-header h2 {{
+    margin: 0.4rem 0 1.25rem;
+    font-size: 1.05rem;
+    font-weight: 400;
+    color: #e2e8f0;
+  }}
+  .report-header .meta {{
+    display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem;
+    font-size: 0.85rem; color: #cbd5e1;
+  }}
+  .report-header .meta span strong {{ color: #ffffff; }}
+
+  /* ---------- layout ---------- */
+  main {{
+    max-width: 1240px;
+    margin: -2rem auto 3rem;
+    padding: 0 2rem;
+  }}
+  section.card {{
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.75rem 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 24px -16px rgba(15, 23, 42, 0.25);
+  }}
+  section.card h3 {{
+    margin: 0 0 1rem;
+    font-size: 1.05rem;
+    color: var(--ink);
+    display: flex; align-items: center; gap: 0.6rem;
+  }}
+  section.card h3::before {{
+    content: ""; display: inline-block;
+    width: 6px; height: 22px; border-radius: 3px;
+    background: var(--accent);
+  }}
+
+  /* ---------- KPIs ---------- */
+  .kpis {{
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+  }}
+  .kpi {{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.1rem 1.25rem;
+    position: relative;
+    overflow: hidden;
+  }}
+  .kpi::after {{
+    content: ""; position: absolute;
+    top: 0; left: 0; height: 3px; width: 100%;
+    background: var(--accent);
+  }}
+  .kpi.kpi--err::after  {{ background: var(--err); }}
+  .kpi.kpi--warn::after {{ background: var(--warn); }}
+  .kpi.kpi--ok::after   {{ background: var(--ok); }}
+
+  .kpi .label {{
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    margin-bottom: 0.35rem;
+  }}
+  .kpi .value {{
+    font-size: 2.1rem;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.05;
+  }}
+  .kpi.kpi--err  .value {{ color: var(--err); }}
+  .kpi.kpi--warn .value {{ color: var(--warn); }}
+  .kpi.kpi--ok   .value {{ color: var(--ok); }}
+  .kpi .hint {{
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 0.4rem;
+  }}
+
+  /* ---------- charts ---------- */
+  .charts-grid {{
+    display: grid;
+    grid-template-columns: 1.1fr 1.4fr;
+    gap: 1.25rem;
+  }}
+  .chart-frame {{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.25rem 1.25rem;
+    min-height: 280px;
+    position: relative;
+  }}
+  .chart-frame h4 {{
+    margin: 0 0 0.75rem;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+  }}
+  .chart-frame canvas {{ max-height: 240px; }}
+
+  /* ---------- table ---------- */
+  .table-wrap {{ overflow-x: auto; }}
+  table {{
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.88rem;
+  }}
+  th {{
+    background: #1e293b;
+    color: #f8fafc;
+    text-align: left;
+    padding: 0.7rem 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.74rem;
+  }}
+  th:first-child {{ border-top-left-radius: 8px; }}
+  th:last-child  {{ border-top-right-radius: 8px; }}
+  td {{
+    padding: 0.7rem 0.9rem;
+    vertical-align: top;
+    border-bottom: 1px solid var(--border);
+  }}
+  td.num   {{ font-variant-numeric: tabular-nums; color: var(--ink-soft); }}
+  td.owasp {{ font-size: 0.78rem; color: var(--ink-soft); }}
+
+  .source {{
+    display: inline-block;
+    background: #e2e8f0;
+    color: var(--ink-soft);
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+  }}
+  .sev {{
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }}
+  .badge {{
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }}
+  .badge--confirmed {{ background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }}
+  .badge--observed  {{ background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }}
+
+  code {{
+    background: #f1f5f9;
+    color: #1e40af;
+    padding: 0.1rem 0.45rem;
+    border-radius: 4px;
+    font-size: 0.82rem;
+    font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  }}
+  pre {{
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 0.78rem;
+    font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    line-height: 1.5;
+  }}
+  details {{ margin-top: 0.4rem; }}
+  summary {{
+    cursor: pointer;
+    color: var(--accent);
+    font-weight: 600;
+    user-select: none;
+    padding: 0.25rem 0;
+  }}
+  summary:hover {{ color: var(--accent-dim); }}
+  .evidence-row > td {{ background: #fafbfc; }}
+  .mitigation {{ font-size: 0.85rem; color: var(--ink-soft); margin: 0.5rem 0 0; }}
+
+  footer.report-footer {{
+    text-align: center;
+    padding: 2rem 1rem 3rem;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }}
+  footer.report-footer a {{
+    color: var(--accent);
+    text-decoration: none;
+  }}
+  footer.report-footer a:hover {{ text-decoration: underline; }}
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 920px) {{
+    .kpis        {{ grid-template-columns: repeat(2, 1fr); }}
+    .charts-grid {{ grid-template-columns: 1fr; }}
+    main         {{ padding: 0 1rem; }}
+    header.report-header {{ padding: 2rem 1.25rem; }}
+  }}
+
+  /* ---------- print / PDF ---------- */
   @media print {{
-    header {{ background: #1e3a8a !important; -webkit-print-color-adjust: exact; }}
-    section {{ box-shadow: none; page-break-inside: avoid; }}
+    header.report-header {{
+      background: #1e3a8a !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }}
+    section.card {{ box-shadow: none; page-break-inside: avoid; }}
+    .charts-grid {{ page-break-inside: avoid; }}
+    pre {{ white-space: pre-wrap; word-break: break-word; }}
+    body {{ background: #ffffff; }}
   }}
 </style>
 </head>
 <body>
-<header>
-  <h1>Steamworks DAST Lab — Technical Audit Report</h1>
-  <p>Metodología DAST con estado para auditar integraciones Steamworks</p>
-  <p>Paula Romero Gallart · Universidad Europea de Madrid · Generado {generated}</p>
+
+<header class="report-header">
+  <div class="eyebrow">DAST · OWASP API Security 2023</div>
+  <h1>{escape(PROJECT_TITLE)}</h1>
+  <h2>{escape(PROJECT_SUBTITLE)}</h2>
+  <div class="meta">
+    <span><strong>Author:</strong> {escape(PROJECT_AUTHOR)}</span>
+    <span><strong>Institution:</strong> {escape(PROJECT_INST)}</span>
+    <span><strong>{escape(PROJECT_DIRECTOR)}</strong></span>
+    <span><strong>Generated:</strong> {escape(generated)}</span>
+  </div>
 </header>
 
 <main>
-  <section>
-    <h2>Resumen ejecutivo</h2>
-    <div class="grid">
-      <div class="metric">
-        <div class="num">{total}</div><div class="label">Hallazgos totales</div>
+
+  <section class="card">
+    <h3>Executive summary</h3>
+    <div class="kpis">
+      <div class="kpi">
+        <div class="label">Total findings</div>
+        <div class="value">{total}</div>
+        <div class="hint">Active suite + Cerberus</div>
       </div>
-      <div class="metric" style="border-color:#dc2626">
-        <div class="num" style="color:#dc2626">{confirmed}</div>
-        <div class="label">Confirmados</div>
+      <div class="kpi kpi--err">
+        <div class="label">Confirmed</div>
+        <div class="value">{confirmed}</div>
+        <div class="hint">Demonstrated impact</div>
       </div>
-      <div class="metric" style="border-color:#f59e0b">
-        <div class="num" style="color:#f59e0b">{observed}</div>
-        <div class="label">Observados</div>
+      <div class="kpi kpi--warn">
+        <div class="label">Observed</div>
+        <div class="value">{observed}</div>
+        <div class="hint">Attack surface detected</div>
       </div>
-      <div class="metric" style="border-color:#10b981">
-        <div class="num" style="color:#10b981">{len(s["category"])}</div>
-        <div class="label">Categorías OWASP</div>
+      <div class="kpi kpi--ok">
+        <div class="label">OWASP categories</div>
+        <div class="value">{n_categories}</div>
+        <div class="hint">API Security Top 10 — 2023</div>
       </div>
     </div>
   </section>
 
-  <section>
-    <h2>Distribución</h2>
-    <div class="charts">
-      <div class="chart-box"><canvas id="sevChart"></canvas></div>
-      <div class="chart-box"><canvas id="catChart"></canvas></div>
+  <section class="card">
+    <h3>Distribution</h3>
+    <div class="charts-grid">
+      <div class="chart-frame">
+        <h4>By severity</h4>
+        <canvas id="sevChart"></canvas>
+      </div>
+      <div class="chart-frame">
+        <h4>By OWASP API category</h4>
+        <canvas id="catChart"></canvas>
+      </div>
     </div>
   </section>
 
-  <section>
-    <h2>Hallazgos detallados</h2>
-    <table>
-      <thead><tr>
-        <th>#</th><th>Origen</th><th>Vulnerabilidad</th><th>Severidad</th>
-        <th>OWASP</th><th>Estado</th><th>Endpoint</th>
-      </tr></thead>
-      <tbody>{rows}</tbody>
-    </table>
+  <section class="card">
+    <h3>Detailed findings</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Source</th>
+            <th>Vulnerability</th>
+            <th>Severity</th>
+            <th>OWASP</th>
+            <th>Status</th>
+            <th>Endpoint</th>
+          </tr>
+        </thead>
+        <tbody>{rows}</tbody>
+      </table>
+    </div>
   </section>
+
 </main>
 
-<footer>
-  Steamworks DAST Lab — TFG 2025/2026 · UEM · Generado automáticamente
+<footer class="report-footer">
+  Steamworks DAST Lab · TFG 2025/2026 · UEM ·
+  <a href="https://github.com/PaulaR17/TFG_CS-DAST-Integraciones-Steamworks-">repository</a>
+  · auto-generated report
 </footer>
 
 <script>
-new Chart(document.getElementById('sevChart'), {{
-  type: 'doughnut',
-  data: {{
-    labels: {[d["label"] for d in sev_data]},
-    datasets: [{{
-      data: {[d["value"] for d in sev_data]},
-      backgroundColor: {[d["color"] for d in sev_data]}
-    }}]
-  }},
-  options: {{ plugins: {{ title: {{ display: true, text: 'Severidad' }} }} }}
-}});
+  const palette = {{
+    grid: 'rgba(15, 23, 42, 0.06)',
+    tick: '#475569',
+    accent: '#2563eb',
+  }};
 
-new Chart(document.getElementById('catChart'), {{
-  type: 'bar',
-  data: {{
-    labels: {[c[0] for c in cat_data]},
-    datasets: [{{
-      label: 'Hallazgos',
-      data: {[c[1] for c in cat_data]},
-      backgroundColor: '#1e40af'
-    }}]
-  }},
-  options: {{
-    indexAxis: 'y',
-    plugins: {{ title: {{ display: true, text: 'Categoría OWASP API 2023' }} }},
-    scales: {{ x: {{ beginAtZero: true, ticks: {{ stepSize: 1 }} }} }}
-  }}
-}});
+  const sevChartCtx = document.getElementById('sevChart');
+  new Chart(sevChartCtx, {{
+    type: 'doughnut',
+    data: {{
+      labels: {json.dumps(sev_labels, ensure_ascii=False)},
+      datasets: [{{
+        data: {json.dumps(sev_values)},
+        backgroundColor: {json.dumps(sev_colors)},
+        borderColor: '#ffffff',
+        borderWidth: 2,
+      }}]
+    }},
+    options: {{
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '60%',
+      plugins: {{
+        legend: {{
+          position: 'right',
+          labels: {{ color: palette.tick, font: {{ size: 12 }}, boxWidth: 14 }}
+        }},
+      }}
+    }}
+  }});
+
+  const catChartCtx = document.getElementById('catChart');
+  new Chart(catChartCtx, {{
+    type: 'bar',
+    data: {{
+      labels: {json.dumps(cat_labels, ensure_ascii=False)},
+      datasets: [{{
+        label: 'Findings',
+        data: {json.dumps(cat_values)},
+        backgroundColor: palette.accent,
+        borderRadius: 6,
+        maxBarThickness: 28,
+      }}]
+    }},
+    options: {{
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: {{ legend: {{ display: false }} }},
+      scales: {{
+        x: {{
+          beginAtZero: true,
+          ticks: {{ color: palette.tick, stepSize: 1, precision: 0 }},
+          grid: {{ color: palette.grid }}
+        }},
+        y: {{
+          ticks: {{ color: palette.tick, font: {{ size: 11 }} }},
+          grid: {{ display: false }}
+        }}
+      }}
+    }}
+  }});
 </script>
+
 </body>
 </html>"""
 
 
-def main():
+def main() -> None:
     findings = load_findings()
     if not findings:
-        print(f"[!] No hay hallazgos en {REPORTS_DIR}")
+        print(f"[!] No findings under {REPORTS_DIR}")
+        print("    Run the suite (python lab/attacks/run_all_attacks.py) and try again.")
         return
     html = build_html(findings)
     OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT_FILE.write_text(html, encoding="utf-8")
-    print(f"[OK] Informe HTML generado: {OUTPUT_FILE}")
-    print(f"     Abre el archivo y usa Ctrl+P para exportar a PDF.")
+    print(f"[OK] HTML report written: {OUTPUT_FILE}")
+    print(f"     {len(findings)} findings total — open the file and Ctrl+P for PDF.")
 
 
 if __name__ == "__main__":

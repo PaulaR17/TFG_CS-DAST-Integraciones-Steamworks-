@@ -1,61 +1,131 @@
+"""
+Steamworks DAST Lab — terminal dashboard.
+
+Single-screen TUI for live monitoring of the lab during defense / demos.
+Dark professional theme inspired by k9s / lazygit / btop.
+"""
+
+from __future__ import annotations
+
 import json
+import os
 import subprocess
 import sys
 import webbrowser
 from datetime import datetime
 from pathlib import Path
-import httpx
-from textual.app import App, ComposeResult
-from textual.containers import Horizontal, Vertical, Container
-from textual.reactive import reactive
-from textual.widgets import (Header, Footer, Static, DataTable, Button, RichLog)
-from rich.text import Text
 
+import httpx
+from rich.text import Text
+from textual.app import App, ComposeResult
+from textual.containers import Container, Vertical
+from textual.reactive import reactive
+from textual.widgets import Button, DataTable, Footer, Header, RichLog, Static
+
+
+# ----------------------------------------------------------------------------
+# Paths
+# ----------------------------------------------------------------------------
 ROOT = Path(__file__).resolve().parent.parent.parent
 ATTACKS_DIR = ROOT / "lab" / "attacks"
 REPORTS_DIR = ROOT / "lab" / "reports"
-INFRA_DIR = ROOT / "lab" / "infra"
 REPORTING_SCRIPT = ROOT / "reporting" / "generate_html_report.py"
 FINDINGS_FILE = REPORTS_DIR / "findings.jsonl"
 CERBERUS_FILE = REPORTS_DIR / "cerberus_findings.jsonl"
 
-BACKEND_URL = "http://192.168.0.103:8080"
-PROXY_URL   = "http://192.168.0.103:8081"
 
+# ----------------------------------------------------------------------------
+# Env-configurable connection (defaults to local docker compose)
+# ----------------------------------------------------------------------------
+BACKEND_URL = os.getenv("DASHBOARD_BACKEND_URL", "http://localhost:8080")
+PROXY_URL   = os.getenv("DASHBOARD_PROXY_URL",   "http://localhost:8081")
+
+DB_CONTAINER = os.getenv("DASHBOARD_DB_CONTAINER", "tfg_db")
+DB_USER      = os.getenv("DASHBOARD_DB_USER",      "paula")
+DB_NAME      = os.getenv("DASHBOARD_DB_NAME",      "tfg_game_db")
+
+
+# ----------------------------------------------------------------------------
+# Attacks catalogue
+# ----------------------------------------------------------------------------
 ATTACKS = [
-    ("1", "BOLA","bola_attack.py","#ef4444"),
-    ("2", "BOPLA","bopla_attack.py","#f59e0b"),
-    ("3", "Weak Token","weak_token_impersonation.py","#a855f7"),
-    ("4", "Tx Fraud","transaction_fraud_attack.py","#06b6d4"),
-    ("5", "RUN ALL","run_all_attacks.py","#10b981"),
+    ("1", "BOLA",         "API1:2023", "bola_attack.py"),
+    ("2", "BOPLA",        "API3:2023", "bopla_attack.py"),
+    ("3", "Weak Token",   "API2:2023", "weak_token_impersonation.py"),
+    ("4", "Tx Fraud",     "API6:2023", "transaction_fraud_attack.py"),
+    ("5", "RUN ALL",      "suite",     "run_all_attacks.py"),
 ]
 
-SEVERITY_COLORS = {
-    "Critical":"bold #b91c1c",
-    "High":"bold #ef4444",
-    "Medium":"bold #f59e0b",
-    "Low":"bold #10b981",
-    "Info":"bold #3b82f6",
+
+# ----------------------------------------------------------------------------
+# Theme — single accent (cyan), GitHub-dark inspired
+# ----------------------------------------------------------------------------
+BG          = "#0d1117"
+SURFACE     = "#161b22"
+BORDER      = "#30363d"
+BORDER_HI   = "#21d4fd"
+
+INK         = "#e6edf3"
+INK_DIM     = "#7d8590"
+INK_FAINT   = "#484f58"
+
+ACCENT      = "#21d4fd"   # cyan
+ACCENT_ALT  = "#a371f7"   # purple (links/hotkeys)
+OK          = "#3fb950"
+WARN        = "#d29922"
+ERR         = "#f85149"
+CRIT        = "#ff7b72"
+
+
+SEVERITY_STYLE = {
+    "Critical": CRIT,
+    "High":     ERR,
+    "Medium":   WARN,
+    "Low":      OK,
+    "Info":     ACCENT,
 }
 
 
+# ----------------------------------------------------------------------------
+# Helpers
+# ----------------------------------------------------------------------------
+def status_of(d: dict) -> str:
+    if "confirmed" in d:
+        return "confirmed" if d["confirmed"] else "observed"
+    return str(d.get("status", "observed")).lower()
+
+
+def _title(text: str, color: str = ACCENT) -> str:
+    """Small section title rendered with a leading accent bar."""
+    return f"[bold {color}]▍[/] [bold {INK}]{text}[/]"
+
+
+# ----------------------------------------------------------------------------
+# Panels
+# ----------------------------------------------------------------------------
 class StatusPanel(Static):
     backend_ok = reactive(False)
-    proxy_ok= reactive(False)
-    db_ok= reactive(True)
+    proxy_ok = reactive(False)
+    db_ok = reactive(True)
 
     def render(self):
-        def led(ok):
-            return "[bold #10b981]●[/]" if ok else "[bold #ef4444]●[/]"
+        def chip(ok: bool) -> str:
+            color = OK if ok else ERR
+            label = "ONLINE " if ok else "OFFLINE"
+            return f"[bold {color}]●[/] [bold {color}]{label}[/]"
 
-        lines = [
-            "[bold #06b6d4]SYSTEM STATUS[/]",
+        return "\n".join([
+            _title("SERVICES"),
             "",
-            f"  {led(self.backend_ok)} Backend   [dim]{BACKEND_URL}[/]",
-            f"  {led(self.proxy_ok)} Cerberus  [dim]{PROXY_URL}[/]",
-            f"  {led(self.db_ok)} Database  [dim]postgres:5432[/]",
-        ]
-        return "\n".join(lines)
+            f"  {chip(self.backend_ok)}  [bold]Backend[/]",
+            f"             [dim {INK_DIM}]{BACKEND_URL}[/]",
+            "",
+            f"  {chip(self.proxy_ok)}  [bold]Cerberus / mitmweb[/]",
+            f"             [dim {INK_DIM}]{PROXY_URL}[/]",
+            "",
+            f"  {chip(self.db_ok)}  [bold]PostgreSQL[/]",
+            f"             [dim {INK_DIM}]{DB_CONTAINER} · {DB_NAME}[/]",
+        ])
 
 
 class StatsPanel(Static):
@@ -66,270 +136,338 @@ class StatsPanel(Static):
     high = reactive(0)
 
     def render(self):
-        return (
-            "[bold #06b6d4]METRICS[/]\n\n"
-            f"  Total findings   [bold white]{self.total:>4}[/]\n"
-            f"  [bold #ef4444]Confirmed[/]        [bold #ef4444]{self.confirmed:>4}[/]\n"
-            f"  [bold #f59e0b]Observed[/]         [bold #f59e0b]{self.observed:>4}[/]\n"
-            f"\n"
-            f"  Critical sev.    [bold #b91c1c]{self.critical:>4}[/]\n"
-            f"  High sev.        [bold #ef4444]{self.high:>4}[/]"
-        )
+        def row(label: str, value: int, color: str, glyph: str = "") -> str:
+            lbl = f"[{INK_DIM}]{label:<11}[/]"
+            val = f"[bold {color}]{value:>4}[/]"
+            g = f"[{color}]{glyph}[/]  " if glyph else "   "
+            return f"  {g}{lbl}  {val}"
+
+        return "\n".join([
+            _title("FINDINGS"),
+            "",
+            row("Total",     self.total,     INK,  "■"),
+            row("Confirmed", self.confirmed, ERR,  "●"),
+            row("Observed",  self.observed,  WARN, "○"),
+            "",
+            f"  [dim {INK_FAINT}]── severity highlights ──[/]",
+            "",
+            row("Critical",  self.critical,  CRIT, "▲"),
+            row("High",      self.high,      ERR,  "▲"),
+        ])
 
 
 class SeverityBars(Static):
     counts = reactive({})
 
     def render(self):
-        if not self.counts:
-            return "[bold #06b6d4]SEVERITY[/]\n\n  [dim]Sin datos[/]"
-
-        max_v = max(self.counts.values()) if self.counts else 1
         order = ["Critical", "High", "Medium", "Low", "Info"]
-        lines = ["[bold #06b6d4]SEVERITY[/]", ""]
+        if not self.counts:
+            return "\n".join([
+                _title("SEVERITY"),
+                "",
+                f"  [dim {INK_DIM}]No findings yet.[/]",
+                f"  [dim {INK_DIM}]Press [bold {ACCENT_ALT}]1-5[/] to run an attack.[/]",
+            ])
 
+        max_v = max(self.counts.values()) or 1
+        lines = [_title("SEVERITY"), ""]
         for sev in order:
             v = self.counts.get(sev, 0)
             if v == 0:
                 continue
-            bar_len = int((v / max_v) * 18)
-            bar = "█" * bar_len + "░" * (18 - bar_len)
-            color = SEVERITY_COLORS.get(sev, "white")
-            lines.append(f"  [{color}]{sev:<8}[/] [{color}]{bar}[/] [bold]{v}[/]")
-
+            color = SEVERITY_STYLE.get(sev, INK)
+            bar_len = max(1, int((v / max_v) * 22))
+            bar = "█" * bar_len + "·" * (22 - bar_len)
+            lines.append(
+                f"  [{color}]{sev:<8}[/] [{color}]{bar}[/]  [bold {INK}]{v}[/]"
+            )
         return "\n".join(lines)
 
 
+# ----------------------------------------------------------------------------
+# App
+# ----------------------------------------------------------------------------
 class DASTDashboard(App):
-    CSS = """
-    Screen {
-        background: #0a0e1a;
-    }
+    CSS = f"""
+    Screen {{
+        background: {BG};
+        color: {INK};
+    }}
 
-    #main {
+    Header {{
+        background: {SURFACE};
+        color: {INK};
+        text-style: bold;
+    }}
+    Footer {{
+        background: {SURFACE};
+        color: {INK_DIM};
+    }}
+
+    #banner {{
+        height: 3;
+        padding: 0 2;
+        background: {SURFACE};
+        color: {INK};
+        border-bottom: solid {BORDER};
+        content-align: left middle;
+    }}
+
+    #main {{
         layout: horizontal;
         height: 1fr;
-    }
+        padding: 1 1 0 1;
+    }}
 
-    #left-col {
-        width: 38;
+    #left-col {{
+        width: 44;
         height: 1fr;
-    }
-
-    #right-col {
+        padding-right: 1;
+    }}
+    #right-col {{
         width: 1fr;
         height: 1fr;
-    }
+    }}
 
-    StatusPanel, StatsPanel, SeverityBars {
-        background: #131b2c;
-        border: round #3b82f6;
+    StatusPanel, StatsPanel, SeverityBars, #attacks-box, #findings-box, #log-box {{
+        background: {SURFACE};
+        border: round {BORDER};
         padding: 1 2;
         margin-bottom: 1;
-    }
+    }}
+    StatusPanel  {{ height: 13; }}
+    StatsPanel   {{ height: 12; }}
+    SeverityBars {{ height: 10; }}
+    #attacks-box {{ height: 1fr; }}
 
-    StatusPanel { height: 8; }
-    StatsPanel  { height: 10; }
-    SeverityBars { height: 11; }
+    #findings-box {{ height: 60%; }}
+    #log-box      {{ height: 40%; margin-bottom: 0; }}
 
-    #attacks-box {
-        background: #131b2c;
-        border: round #f59e0b;
-        padding: 1 2;
-        height: 1fr;
-        margin-bottom: 1;
-    }
+    .panel-hint {{
+        color: {INK_DIM};
+    }}
 
-    #findings-box {
-        background: #131b2c;
-        border: round #10b981;
-        padding: 1 2;
-        height: 60%;
-        margin-bottom: 1;
-    }
-
-    #log-box {
-        background: #131b2c;
-        border: round #a855f7;
-        padding: 1 2;
-        height: 40%;
-    }
-
-    DataTable {
-        background: transparent;
-    }
-
-    DataTable > .datatable--header {
-        background: #1e3a8a;
-        color: white;
+    DataTable {{
+        background: {SURFACE};
+        color: {INK};
+    }}
+    DataTable > .datatable--header {{
+        background: {BG};
+        color: {ACCENT};
         text-style: bold;
-    }
+    }}
+    DataTable > .datatable--cursor {{
+        background: {BORDER};
+        color: {INK};
+    }}
+    DataTable > .datatable--odd-row {{
+        background: {SURFACE};
+    }}
+    DataTable > .datatable--even-row {{
+        background: {BG};
+    }}
 
-    Button {
+    Button {{
         width: 100%;
+        height: 3;
         margin-bottom: 1;
-        background: #1f2937;
-        border: tall #374151;
-    }
-
-    Button:hover {
-        background: #374151;
-    }
-
-    .panel-title {
+        background: {BG};
+        color: {INK};
+        border: tall {BORDER};
+        content-align: left middle;
+        padding: 0 2;
+    }}
+    Button:hover {{
+        background: {SURFACE};
+        color: {ACCENT};
+        border: tall {ACCENT};
+    }}
+    Button:focus {{
         text-style: bold;
-        color: #06b6d4;
-        margin-bottom: 1;
-    }
+        border: tall {ACCENT};
+    }}
     """
 
     BINDINGS = [
-        ("1", "run_attack('bola_attack.py')",                "BOLA"),
-        ("2", "run_attack('bopla_attack.py')",               "BOPLA"),
-        ("3", "run_attack('weak_token_impersonation.py')",   "Weak Token"),
-        ("4", "run_attack('transaction_fraud_attack.py')",   "Fraud"),
-        ("5", "run_attack('run_all_attacks.py')",            "Run all"),
-        ("r", "reset_db",                                    "Reset BD"),
-        ("g", "generate_report",                             "Gen HTML"),
-        ("o", "open_mitmweb",                                "Open mitmweb"),
-        ("c", "clear_log",                                   "Clear"),
-        ("q", "quit",                                        "Quit"),
+        ("1", "run_attack('bola_attack.py')",               "BOLA"),
+        ("2", "run_attack('bopla_attack.py')",              "BOPLA"),
+        ("3", "run_attack('weak_token_impersonation.py')",  "Weak Token"),
+        ("4", "run_attack('transaction_fraud_attack.py')",  "Tx Fraud"),
+        ("5", "run_attack('run_all_attacks.py')",           "Run all"),
+        ("r", "reset_db",                                   "Reset DB"),
+        ("g", "generate_report",                            "Gen HTML"),
+        ("o", "open_mitmweb",                               "mitmweb"),
+        ("c", "clear_log",                                  "Clear log"),
+        ("q", "quit",                                       "Quit"),
     ]
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
+        yield Static(
+            f"[bold {ACCENT}]CERBERUS[/]  [{INK_DIM}]·[/]  "
+            f"[bold {INK}]Steamworks DAST Lab[/]   "
+            f"[{INK_DIM}]Paula Romero Gallart  ·  "
+            f"Universidad Europea de Madrid  ·  TFG 2025/26[/]",
+            id="banner",
+        )
         with Container(id="main"):
             with Vertical(id="left-col"):
-                self.status = StatusPanel()
-                yield self.status
-                self.stats = StatsPanel()
-                yield self.stats
-                self.severity = SeverityBars()
-                yield self.severity
+                self.status_panel = StatusPanel()
+                yield self.status_panel
+                self.stats_panel = StatsPanel()
+                yield self.stats_panel
+                self.severity_panel = SeverityBars()
+                yield self.severity_panel
                 with Vertical(id="attacks-box"):
-                    yield Static("[bold #f59e0b]ATTACK PANEL[/]   [dim](teclas 1-5)[/]")
+                    yield Static(_title("ATTACK SUITE", ACCENT_ALT))
                     yield Static("")
-                    for k, name, _, color in ATTACKS:
-                        yield Button(f"[{k}]  {name}", id=f"btn-{k}")
-                    yield Static("")
-                    yield Static("[dim][R] Reset BD  [G] HTML  [O] mitmweb[/]")
+                    for key, name, owasp, _ in ATTACKS:
+                        yield Button(
+                            f"[bold {ACCENT_ALT}][{key}][/]  "
+                            f"[bold]{name:<10}[/]  "
+                            f"[dim {INK_DIM}]{owasp}[/]",
+                            id=f"btn-{key}",
+                        )
+                    yield Static(
+                        f"\n[dim {INK_DIM}]"
+                        f"[bold {ACCENT_ALT}]R[/] reset db   "
+                        f"[bold {ACCENT_ALT}]G[/] regen html   "
+                        f"[bold {ACCENT_ALT}]O[/] mitmweb   "
+                        f"[bold {ACCENT_ALT}]C[/] clear   "
+                        f"[bold {ACCENT_ALT}]Q[/] quit"
+                        f"[/]"
+                    )
+
             with Vertical(id="right-col"):
                 with Vertical(id="findings-box"):
-                    yield Static("[bold #10b981]LIVE FINDINGS[/]   [dim](auto-refresh 2s)[/]")
+                    yield Static(
+                        _title("LIVE FINDINGS") +
+                        f"  [dim {INK_DIM}]auto-refresh 1s · last 30[/]"
+                    )
                     yield Static("")
-                    self.table = DataTable(zebra_stripes=True, cursor_type="row")
-                    self.table.add_columns("#", "Time", "Source", "Vulnerability", "Severity", "Status")
+                    self.table = DataTable(
+                        zebra_stripes=True,
+                        cursor_type="row",
+                        show_cursor=False,
+                    )
+                    self.table.add_columns(
+                        "#", "Time", "Source", "Vulnerability", "Severity", "Status"
+                    )
                     yield self.table
+
                 with Vertical(id="log-box"):
-                    yield Static("[bold #a855f7]ACTIVITY LOG[/]   [dim]([C] clear)[/]")
+                    yield Static(
+                        _title("ACTIVITY LOG", OK) +
+                        f"  [dim {INK_DIM}]C to clear[/]"
+                    )
                     yield Static("")
-                    self.log_widget = RichLog(highlight=True, wrap=True, markup=True)
+                    self.log_widget = RichLog(
+                        highlight=True, wrap=True, markup=True
+                    )
                     yield self.log_widget
+
         yield Footer()
 
     def on_mount(self) -> None:
-        self.title = "Steamworks DAST Dashboard"
-        self.sub_title = "TFG · Paula Romero Gallart · UEM"
+        self.title = "Cerberus · Steamworks DAST"
+        self.sub_title = "Live audit dashboard"
         self.set_interval(3.0, self.refresh_status)
-        self.set_interval(2.0, self.refresh_findings)
+        self.set_interval(1.0, self.refresh_findings)
         self.refresh_status()
-        self._log_info("Dashboard iniciado")
+        self.refresh_findings()
+        self._log("INFO", "Dashboard ready. Press 1-5 to launch an attack.")
 
-    # ---------- helpers ----------
-    def _now(self):
+    # ----------------------- logging helpers ----------------------------
+    def _now(self) -> str:
         return datetime.now().strftime("%H:%M:%S")
 
-    def _log_info(self, msg):
-        self.log_widget.write(f"[dim]{self._now()}[/] [#3b82f6]INFO[/]  {msg}")
+    def _log(self, level: str, msg: str) -> None:
+        colors = {
+            "INFO":  ACCENT,
+            "OK":    OK,
+            "WARN":  WARN,
+            "ERROR": ERR,
+        }
+        color = colors.get(level, INK)
+        self.log_widget.write(
+            f"[{INK_FAINT}]{self._now()}[/] "
+            f"[bold {color}]{level:<5}[/]  {msg}"
+        )
 
-    def _log_ok(self, msg):
-        self.log_widget.write(f"[dim]{self._now()}[/] [#10b981]OK[/]    {msg}")
-
-    def _log_warn(self, msg):
-        self.log_widget.write(f"[dim]{self._now()}[/] [#f59e0b]WARN[/]  {msg}")
-
-    def _log_err(self, msg):
-        self.log_widget.write(f"[dim]{self._now()}[/] [#ef4444]ERROR[/] {msg}")
-
-    # ---------- actions ----------
-    def action_refresh_status(self):
+    # ----------------------- actions ------------------------------------
+    def refresh_status(self) -> None:
         try:
             r = httpx.get(f"{BACKEND_URL}/", timeout=2.0)
-            self.status.backend_ok = 200 <= r.status_code < 500
+            self.status_panel.backend_ok = 200 <= r.status_code < 500
         except Exception:
-            self.status.backend_ok = False
+            self.status_panel.backend_ok = False
         try:
             r = httpx.get(f"{PROXY_URL}/", timeout=2.0, follow_redirects=False)
-            self.status.proxy_ok = r.status_code < 500
+            self.status_panel.proxy_ok = r.status_code < 500
         except Exception:
-            self.status.proxy_ok = False
-        self.status.db_ok = self.status.backend_ok  # si el backend va, asumimos BD ok
+            self.status_panel.proxy_ok = False
+        # Backend lives only if it can reach the DB, so we mirror that signal.
+        self.status_panel.db_ok = self.status_panel.backend_ok
 
-    refresh_status = action_refresh_status
-
-    def refresh_findings(self):
-        rows = []
+    def refresh_findings(self) -> None:
+        rows: list[tuple[str, dict]] = []
         try:
             if FINDINGS_FILE.exists():
                 with open(FINDINGS_FILE, "r", encoding="utf-8") as f:
                     for line in f:
                         try:
-                            d = json.loads(line)
-                            rows.append(("Attack", d))
+                            rows.append(("Active suite", json.loads(line)))
                         except Exception:
                             pass
             if CERBERUS_FILE.exists():
                 with open(CERBERUS_FILE, "r", encoding="utf-8") as f:
                     for line in f:
                         try:
-                            d = json.loads(line)
-                            rows.append(("Cerberus", d))
+                            rows.append(("Cerberus", json.loads(line)))
                         except Exception:
                             pass
         except Exception as e:
-            self._log_err(f"refresh_findings: {e}")
+            self._log("ERROR", f"refresh_findings: {e}")
             return
 
-        # stats
         total = len(rows)
-        confirmed = sum(1 for _, d in rows if str(d.get("status", "")).lower() == "confirmed")
-        observed = total - confirmed
+        confirmed = sum(1 for _, d in rows if status_of(d) == "confirmed")
         critical = sum(1 for _, d in rows if d.get("severity") == "Critical")
         high = sum(1 for _, d in rows if d.get("severity") == "High")
-        sev_counts = {}
+        sev_counts: dict[str, int] = {}
         for _, d in rows:
             sev = d.get("severity", "Info")
             sev_counts[sev] = sev_counts.get(sev, 0) + 1
 
-        self.stats.total = total
-        self.stats.confirmed = confirmed
-        self.stats.observed = observed
-        self.stats.critical = critical
-        self.stats.high = high
-        self.severity.counts = sev_counts
+        self.stats_panel.total = total
+        self.stats_panel.confirmed = confirmed
+        self.stats_panel.observed = total - confirmed
+        self.stats_panel.critical = critical
+        self.stats_panel.high = high
+        self.severity_panel.counts = sev_counts
 
-        # tabla
         self.table.clear()
         for i, (source, d) in enumerate(rows[-30:], 1):
             sev = d.get("severity", "?")
-            sev_color = SEVERITY_COLORS.get(sev, "white")
-            sev_text = Text(sev, style=sev_color.replace("bold ", ""))
+            sev_text = Text(sev, style=SEVERITY_STYLE.get(sev, INK))
 
-            status = str(d.get("status", "observed"))
-            status_color = "#ef4444" if status.lower() == "confirmed" else "#f59e0b"
-            status_text = Text(status.upper(), style=status_color)
+            st = status_of(d)
+            st_color = ERR if st == "confirmed" else WARN
+            st_text = Text(st.upper(), style=f"bold {st_color}")
 
-            ts = d.get("timestamp", "")[-8:] if d.get("timestamp") else self._now()
+            ts_raw = d.get("timestamp", "")
+            ts = ts_raw[11:19] if "T" in ts_raw else (ts_raw[-8:] or self._now())
+
             vuln = (d.get("vulnerability") or "?")[:40]
 
-            self.table.add_row(str(i), ts, source, vuln, sev_text, status_text)
+            self.table.add_row(str(i), ts, source, vuln, sev_text, st_text)
 
-    def action_run_attack(self, script: str):
+    def action_run_attack(self, script: str) -> None:
         path = ATTACKS_DIR / script
         if not path.exists():
-            self._log_err(f"No existe {script}")
+            self._log("ERROR", f"Script not found: {script}")
             return
-        self._log_info(f"Lanzando [bold]{script}[/]")
+        self._log("INFO", f"Launching [bold]{script}[/]")
         try:
             subprocess.Popen(
                 [sys.executable, str(path)],
@@ -337,53 +475,54 @@ class DASTDashboard(App):
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
-            self._log_ok(f"{script} en background")
+            self._log("OK", f"{script} running in background")
         except Exception as e:
-            self._log_err(str(e))
+            self._log("ERROR", str(e))
 
-    def action_reset_db(self):
+    def action_reset_db(self) -> None:
         cmd = [
-            "docker", "exec", "tfg_db", "psql", "-U", "postgres", "-d", "tfg",
-            "-c", "UPDATE users SET credits=100;"
+            "docker", "exec", DB_CONTAINER, "psql",
+            "-U", DB_USER, "-d", DB_NAME,
+            "-c", "UPDATE users SET credits=100;",
         ]
-        self._log_info("Reseteando créditos en BD...")
+        self._log("INFO", "Resetting credits to 100 in DB...")
         try:
             r = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
             if r.returncode == 0:
-                self._log_ok("Créditos reseteados a 100")
+                self._log("OK", "Credits reset to 100")
             else:
-                self._log_err(f"reset_db: {r.stderr.strip()}")
+                self._log("ERROR", f"reset_db: {r.stderr.strip()}")
         except Exception as e:
-            self._log_err(str(e))
+            self._log("ERROR", str(e))
 
-    def action_generate_report(self):
+    def action_generate_report(self) -> None:
         if not REPORTING_SCRIPT.exists():
-            self._log_err(f"No existe {REPORTING_SCRIPT}")
+            self._log("ERROR", f"Reporting script not found: {REPORTING_SCRIPT}")
             return
-        self._log_info("Generando informe HTML...")
+        self._log("INFO", "Generating HTML report...")
         try:
             r = subprocess.run(
                 [sys.executable, str(REPORTING_SCRIPT)],
-                capture_output=True, text=True, timeout=20
+                capture_output=True, text=True, timeout=20,
             )
             if r.returncode == 0:
-                self._log_ok("Informe HTML generado en lab/reports/audit_report.html")
+                self._log("OK", "HTML report written to lab/reports/audit_report.html")
             else:
-                self._log_err(f"generate_report: {r.stderr.strip()}")
+                self._log("ERROR", f"generate_report: {r.stderr.strip()}")
         except Exception as e:
-            self._log_err(str(e))
+            self._log("ERROR", str(e))
 
-    def action_open_mitmweb(self):
+    def action_open_mitmweb(self) -> None:
         webbrowser.open(PROXY_URL)
-        self._log_info(f"Abriendo {PROXY_URL} en navegador")
+        self._log("INFO", f"Opening {PROXY_URL} in browser")
 
-    def action_clear_log(self):
+    def action_clear_log(self) -> None:
         self.log_widget.clear()
-        self._log_info("Log limpio")
+        self._log("INFO", "Log cleared")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         key = event.button.id.split("-")[-1]
-        for k, _, script, _ in ATTACKS:
+        for k, _, _, script in ATTACKS:
             if k == key:
                 self.action_run_attack(script)
                 return
