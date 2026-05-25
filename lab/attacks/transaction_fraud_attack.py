@@ -149,7 +149,9 @@ def run_transaction_fraud_attack() -> bool:
             )
         )
 
-        return confirmed and secure_blocked
+        attack_success = confirmed and secure_blocked
+
+    return attack_success
 
 
 if __name__ == "__main__":

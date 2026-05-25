@@ -288,7 +288,7 @@
     <span><strong>Author:</strong> Paula Romero Gallart</span>
     <span><strong>Institution:</strong> Universidad Europea de Madrid — Double Degree in Video Game Design and Computer Engineering</span>
     <span><strong>Project director: José Javier Ruiz Cobo</strong></span>
-    <span><strong>Generated:</strong> 2026-05-17 17:16:38</span>
+    <span><strong>Generated:</strong> 2026-05-17 21:09:47</span>
   </div>
 </header>
 
@@ -299,22 +299,22 @@
     <div class="kpis">
       <div class="kpi">
         <div class="label">Total findings</div>
-        <div class="value">31</div>
+        <div class="value">6</div>
         <div class="hint">Active suite + Cerberus</div>
       </div>
       <div class="kpi kpi--err">
         <div class="label">Confirmed</div>
-        <div class="value">17</div>
+        <div class="value">1</div>
         <div class="hint">Demonstrated impact</div>
       </div>
       <div class="kpi kpi--warn">
         <div class="label">Observed</div>
-        <div class="value">14</div>
+        <div class="value">5</div>
         <div class="hint">Attack surface detected</div>
       </div>
       <div class="kpi kpi--ok">
         <div class="label">OWASP categories</div>
-        <div class="value">5</div>
+        <div class="value">3</div>
         <div class="hint">API Security Top 10 — 2023</div>
       </div>
     </div>
@@ -352,7 +352,7 @@
         <tbody>
     <tr>
       <td class="num">1</td>
-      <td><span class="source">Active suite</span></td>
+      <td><span class="source">Cerberus (passive)</span></td>
       <td><strong>Broken Object Level Authorization (BOLA)</strong></td>
       <td><span class="sev" style="background:#dc2626">High</span></td>
       <td class="owasp">API1:2023 Broken Object Level Authorization</td>
@@ -364,50 +364,13 @@
         <details>
           <summary>Technical evidence &amp; mitigation</summary>
           <pre>{
-  &quot;attacker_user_id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-  &quot;victim_user_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;,
-  &quot;vulnerable_status_code&quot;: 200,
-  &quot;secure_status_code&quot;: 403,
-  &quot;returned_items&quot;: [
-    {
-      &quot;id&quot;: &quot;fd80dccf-884b-42b1-ae9b-b04bd5dc42bc&quot;,
-      &quot;item_name&quot;: &quot;Starter Sword&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;53dae246-5e3d-4ff3-bb13-441dcbf89c1a&quot;,
-      &quot;item_name&quot;: &quot;Golden_AK47_928e2606-327d-44e7-8e05-571d51f44c9b&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;7a2f76af-f3de-4f43-a080-dffdbc29818d&quot;,
-      &quot;item_name&quot;: &quot;Golden Sword 762325cc-8168-43fe-9ba6-44c15d5f475b&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;29c9b086-a037-467b-aa4e-16ce00afd0e4&quot;,
-      &quot;item_name&quot;: &quot;Golden Sword 31bb4883-5ccf-4803-9719-ba4efdf45866&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;9b802e75-c6f3-49fc-a6b8-f466ee08f032&quot;,
-      &quot;item_name&quot;: &quot;Golden Sword 8cba6b91-de91-469a-b18c-ba8245c30229&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;aabd8240-74d7-4d82-b045-c768ec01f1e2&quot;,
-      &quot;item_name&quot;: &quot;Golden Sword f6b3acfa-d4ef-4ffa-940e-6ebe6f326379&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    }
-  ]
+  &quot;method&quot;: &quot;GET&quot;,
+  &quot;path&quot;: &quot;/vulnerable/inventory/b50c41e4-844c-484d-ab03-c2f80c6c071f&quot;,
+  &quot;status_code&quot;: 200,
+  &quot;authenticated_user_id&quot;: &quot;f2c662c3-f3fe-4fb4-aa5a-79c4daa1157c&quot;,
+  &quot;requested_user_id&quot;: &quot;b50c41e4-844c-484d-ab03-c2f80c6c071f&quot;
 }</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Validate that the requested user_id matches the authenticated user_id extracted from the token before querying inventory data.</p>
+          <p class="mitigation"><strong>Mitigation:</strong> Validate that the requested user_id matches the authenticated user_id before returning inventory resources.</p>
         </details>
       </td>
     </tr>
@@ -415,11 +378,11 @@
 
     <tr>
       <td class="num">2</td>
-      <td><span class="source">Active suite</span></td>
-      <td><strong>Broken Object Property Level Authorization / Mass Assignment</strong></td>
-      <td><span class="sev" style="background:#dc2626">High</span></td>
-      <td class="owasp">API3:2023 Broken Object Property Level Authorization</td>
-      <td><span class="badge badge--confirmed">CONFIRMED</span></td>
+      <td><span class="source">Cerberus (passive)</span></td>
+      <td><strong>Sensitive Client-Controlled Property</strong></td>
+      <td><span class="sev" style="background:#d97706">Medium</span></td>
+      <td class="owasp">API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow</td>
+      <td><span class="badge badge--observed">OBSERVED</span></td>
       <td><code>/vulnerable/users/me</code></td>
     </tr>
     <tr class="evidence-row">
@@ -427,38 +390,17 @@
         <details>
           <summary>Technical evidence &amp; mitigation</summary>
           <pre>{
-  &quot;initial_profile&quot;: {
-    &quot;id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-    &quot;steam_id&quot;: &quot;76561198000000002&quot;,
-    &quot;username&quot;: &quot;SafeMassAssignmentUser&quot;,
-    &quot;credits&quot;: 100,
-    &quot;is_admin&quot;: false
-  },
-  &quot;vulnerable_payload&quot;: {
+  &quot;method&quot;: &quot;PATCH&quot;,
+  &quot;path&quot;: &quot;/vulnerable/users/me&quot;,
+  &quot;detected_fields&quot;: [
+    &quot;credits&quot;
+  ],
+  &quot;request_body&quot;: {
     &quot;username&quot;: &quot;MassAssignmentUser&quot;,
     &quot;credits&quot;: 777777
-  },
-  &quot;vulnerable_response&quot;: {
-    &quot;id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-    &quot;steam_id&quot;: &quot;76561198000000002&quot;,
-    &quot;username&quot;: &quot;MassAssignmentUser&quot;,
-    &quot;credits&quot;: 777777,
-    &quot;is_admin&quot;: false
-  },
-  &quot;secure_payload&quot;: {
-    &quot;username&quot;: &quot;SafeMassAssignmentUser&quot;,
-    &quot;credits&quot;: 1
-  },
-  &quot;secure_response&quot;: {
-    &quot;id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-    &quot;steam_id&quot;: &quot;76561198000000002&quot;,
-    &quot;username&quot;: &quot;SafeMassAssignmentUser&quot;,
-    &quot;credits&quot;: 777777,
-    &quot;is_admin&quot;: false
-  },
-  &quot;expected_secure_behavior&quot;: &quot;username is updated, but credits remains unchanged&quot;
+  }
 }</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Use strict input DTOs and whitelist only the fields that the client is allowed to modify. Sensitive fields such as credits and is_admin must never be accepted from client-controlled JSON.</p>
+          <p class="mitigation"><strong>Mitigation:</strong> Reject or ignore client-controlled sensitive fields such as credits, is_admin, role and approved_by_client.</p>
         </details>
       </td>
     </tr>
@@ -466,31 +408,29 @@
 
     <tr>
       <td class="num">3</td>
-      <td><span class="source">Active suite</span></td>
-      <td><strong>Weak Token Integrity / User Impersonation</strong></td>
-      <td><span class="sev" style="background:#7f1d1d">Critical</span></td>
-      <td class="owasp">API2:2023 Broken Authentication</td>
-      <td><span class="badge badge--confirmed">CONFIRMED</span></td>
-      <td><code>/users/me</code></td>
+      <td><span class="source">Cerberus (passive)</span></td>
+      <td><strong>Sensitive Client-Controlled Property</strong></td>
+      <td><span class="sev" style="background:#d97706">Medium</span></td>
+      <td class="owasp">API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow</td>
+      <td><span class="badge badge--observed">OBSERVED</span></td>
+      <td><code>/secure/users/me</code></td>
     </tr>
     <tr class="evidence-row">
       <td colspan="7">
         <details>
           <summary>Technical evidence &amp; mitigation</summary>
           <pre>{
-  &quot;attacker_user_id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-  &quot;victim_user_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;,
-  &quot;victim_steam_id&quot;: &quot;76561198000000003&quot;,
-  &quot;status_code&quot;: 200,
-  &quot;response_body&quot;: {
-    &quot;id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;,
-    &quot;steam_id&quot;: &quot;76561198000000003&quot;,
-    &quot;username&quot;: &quot;Victim_Test&quot;,
-    &quot;credits&quot;: 100,
-    &quot;is_admin&quot;: false
+  &quot;method&quot;: &quot;PATCH&quot;,
+  &quot;path&quot;: &quot;/secure/users/me&quot;,
+  &quot;detected_fields&quot;: [
+    &quot;credits&quot;
+  ],
+  &quot;request_body&quot;: {
+    &quot;username&quot;: &quot;SafeMassAssignmentUser&quot;,
+    &quot;credits&quot;: 1
   }
 }</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Replace unsigned Base64 tokens with signed JWTs or server-side sessions. In a real Steamworks integration, validate the Steam ticket server-side against Steam Web API and generate a signed session token with expiration.</p>
+          <p class="mitigation"><strong>Mitigation:</strong> Reject or ignore client-controlled sensitive fields such as credits, is_admin, role and approved_by_client.</p>
         </details>
       </td>
     </tr>
@@ -498,11 +438,11 @@
 
     <tr>
       <td class="num">4</td>
-      <td><span class="source">Active suite</span></td>
-      <td><strong>Client-Side Trust in Transaction Finalization</strong></td>
-      <td><span class="sev" style="background:#7f1d1d">Critical</span></td>
-      <td class="owasp">API6:2023 Unrestricted Access to Sensitive Business Flows</td>
-      <td><span class="badge badge--confirmed">CONFIRMED</span></td>
+      <td><span class="source">Cerberus (passive)</span></td>
+      <td><strong>Sensitive Client-Controlled Property</strong></td>
+      <td><span class="sev" style="background:#d97706">Medium</span></td>
+      <td class="owasp">API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow</td>
+      <td><span class="badge badge--observed">OBSERVED</span></td>
       <td><code>/vulnerable/transactions/finalize</code></td>
     </tr>
     <tr class="evidence-row">
@@ -510,32 +450,17 @@
         <details>
           <summary>Technical evidence &amp; mitigation</summary>
           <pre>{
-  &quot;attacker_user_id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-  &quot;initial_credits&quot;: 777777,
-  &quot;final_credits&quot;: 782777,
-  &quot;amount&quot;: 5000,
-  &quot;order_id&quot;: &quot;ORDER_FRAUD_893ecc52-fbeb-40c9-b84b-1ccb86549bf5&quot;,
-  &quot;init_response&quot;: {
-    &quot;id&quot;: &quot;1e8b3859-e033-4a58-965c-5121297f3330&quot;,
-    &quot;order_id&quot;: &quot;ORDER_FRAUD_893ecc52-fbeb-40c9-b84b-1ccb86549bf5&quot;,
-    &quot;item_name&quot;: &quot;Mega Coins Pack&quot;,
-    &quot;amount&quot;: 5000,
-    &quot;approved_by_client&quot;: false,
-    &quot;finalized&quot;: false,
-    &quot;owner_id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;
-  },
-  &quot;finalize_response&quot;: {
-    &quot;id&quot;: &quot;1e8b3859-e033-4a58-965c-5121297f3330&quot;,
-    &quot;order_id&quot;: &quot;ORDER_FRAUD_893ecc52-fbeb-40c9-b84b-1ccb86549bf5&quot;,
-    &quot;item_name&quot;: &quot;Mega Coins Pack&quot;,
-    &quot;amount&quot;: 5000,
-    &quot;approved_by_client&quot;: false,
-    &quot;finalized&quot;: true,
-    &quot;owner_id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;
-  },
-  &quot;secure_status_code&quot;: 403
+  &quot;method&quot;: &quot;POST&quot;,
+  &quot;path&quot;: &quot;/vulnerable/transactions/finalize&quot;,
+  &quot;detected_fields&quot;: [
+    &quot;approved_by_client&quot;
+  ],
+  &quot;request_body&quot;: {
+    &quot;order_id&quot;: &quot;ORDER_FRAUD_fe611da9-361b-4f53-9669-329327f47a0c&quot;,
+    &quot;approved_by_client&quot;: true
+  }
 }</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Never trust approved_by_client or any payment state sent by the client. The backend must verify the transaction directly with Steam Web API or a trusted payment provider before granting credits or virtual items.</p>
+          <p class="mitigation"><strong>Mitigation:</strong> Reject or ignore client-controlled sensitive fields such as credits, is_admin, role and approved_by_client.</p>
         </details>
       </td>
     </tr>
@@ -543,68 +468,26 @@
 
     <tr>
       <td class="num">5</td>
-      <td><span class="source">Active suite</span></td>
-      <td><strong>Broken Object Level Authorization (BOLA)</strong></td>
+      <td><span class="source">Cerberus (passive)</span></td>
+      <td><strong>Client-Side Transaction Approval Attempt</strong></td>
       <td><span class="sev" style="background:#dc2626">High</span></td>
-      <td class="owasp">API1:2023 Broken Object Level Authorization</td>
-      <td><span class="badge badge--confirmed">CONFIRMED</span></td>
-      <td><code>/vulnerable/inventory/{user_id}</code></td>
+      <td class="owasp">API6:2023 Unrestricted Access to Sensitive Business Flows</td>
+      <td><span class="badge badge--observed">OBSERVED</span></td>
+      <td><code>/vulnerable/transactions/finalize</code></td>
     </tr>
     <tr class="evidence-row">
       <td colspan="7">
         <details>
           <summary>Technical evidence &amp; mitigation</summary>
           <pre>{
-  &quot;attacker_user_id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-  &quot;victim_user_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;,
-  &quot;vulnerable_status_code&quot;: 200,
-  &quot;secure_status_code&quot;: 403,
-  &quot;returned_items&quot;: [
-    {
-      &quot;id&quot;: &quot;fd80dccf-884b-42b1-ae9b-b04bd5dc42bc&quot;,
-      &quot;item_name&quot;: &quot;Starter Sword&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;53dae246-5e3d-4ff3-bb13-441dcbf89c1a&quot;,
-      &quot;item_name&quot;: &quot;Golden_AK47_928e2606-327d-44e7-8e05-571d51f44c9b&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;7a2f76af-f3de-4f43-a080-dffdbc29818d&quot;,
-      &quot;item_name&quot;: &quot;Golden Sword 762325cc-8168-43fe-9ba6-44c15d5f475b&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;29c9b086-a037-467b-aa4e-16ce00afd0e4&quot;,
-      &quot;item_name&quot;: &quot;Golden Sword 31bb4883-5ccf-4803-9719-ba4efdf45866&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;9b802e75-c6f3-49fc-a6b8-f466ee08f032&quot;,
-      &quot;item_name&quot;: &quot;Golden Sword 8cba6b91-de91-469a-b18c-ba8245c30229&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;aabd8240-74d7-4d82-b045-c768ec01f1e2&quot;,
-      &quot;item_name&quot;: &quot;Golden Sword f6b3acfa-d4ef-4ffa-940e-6ebe6f326379&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;e1a49f28-08b8-4f6f-8ad8-cab640b86d7a&quot;,
-      &quot;item_name&quot;: &quot;Golden Sword a92af437-d504-4d04-92e9-696d310d5fae&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    }
-  ]
+  &quot;method&quot;: &quot;POST&quot;,
+  &quot;path&quot;: &quot;/vulnerable/transactions/finalize&quot;,
+  &quot;request_body&quot;: {
+    &quot;order_id&quot;: &quot;ORDER_FRAUD_fe611da9-361b-4f53-9669-329327f47a0c&quot;,
+    &quot;approved_by_client&quot;: true
+  }
 }</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Validate that the requested user_id matches the authenticated user_id extracted from the token before querying inventory data.</p>
+          <p class="mitigation"><strong>Mitigation:</strong> The backend must verify payment state server-side against Steam Web API or another trusted payment provider.</p>
         </details>
       </td>
     </tr>
@@ -612,567 +495,6 @@
 
     <tr>
       <td class="num">6</td>
-      <td><span class="source">Active suite</span></td>
-      <td><strong>Broken Object Property Level Authorization / Mass Assignment</strong></td>
-      <td><span class="sev" style="background:#dc2626">High</span></td>
-      <td class="owasp">API3:2023 Broken Object Property Level Authorization</td>
-      <td><span class="badge badge--confirmed">CONFIRMED</span></td>
-      <td><code>/vulnerable/users/me</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;initial_profile&quot;: {
-    &quot;id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-    &quot;steam_id&quot;: &quot;76561198000000002&quot;,
-    &quot;username&quot;: &quot;SafeMassAssignmentUser&quot;,
-    &quot;credits&quot;: 782777,
-    &quot;is_admin&quot;: false
-  },
-  &quot;vulnerable_payload&quot;: {
-    &quot;username&quot;: &quot;MassAssignmentUser&quot;,
-    &quot;credits&quot;: 777777
-  },
-  &quot;vulnerable_response&quot;: {
-    &quot;id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-    &quot;steam_id&quot;: &quot;76561198000000002&quot;,
-    &quot;username&quot;: &quot;MassAssignmentUser&quot;,
-    &quot;credits&quot;: 777777,
-    &quot;is_admin&quot;: false
-  },
-  &quot;secure_payload&quot;: {
-    &quot;username&quot;: &quot;SafeMassAssignmentUser&quot;,
-    &quot;credits&quot;: 1
-  },
-  &quot;secure_response&quot;: {
-    &quot;id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-    &quot;steam_id&quot;: &quot;76561198000000002&quot;,
-    &quot;username&quot;: &quot;SafeMassAssignmentUser&quot;,
-    &quot;credits&quot;: 777777,
-    &quot;is_admin&quot;: false
-  },
-  &quot;expected_secure_behavior&quot;: &quot;username is updated, but credits remains unchanged&quot;
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Use strict input DTOs and whitelist only the fields that the client is allowed to modify. Sensitive fields such as credits and is_admin must never be accepted from client-controlled JSON.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">7</td>
-      <td><span class="source">Active suite</span></td>
-      <td><strong>Weak Token Integrity / User Impersonation</strong></td>
-      <td><span class="sev" style="background:#7f1d1d">Critical</span></td>
-      <td class="owasp">API2:2023 Broken Authentication</td>
-      <td><span class="badge badge--confirmed">CONFIRMED</span></td>
-      <td><code>/users/me</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;attacker_user_id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-  &quot;victim_user_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;,
-  &quot;victim_steam_id&quot;: &quot;76561198000000003&quot;,
-  &quot;status_code&quot;: 200,
-  &quot;response_body&quot;: {
-    &quot;id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;,
-    &quot;steam_id&quot;: &quot;76561198000000003&quot;,
-    &quot;username&quot;: &quot;Victim_Test&quot;,
-    &quot;credits&quot;: 100,
-    &quot;is_admin&quot;: false
-  }
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Replace unsigned Base64 tokens with signed JWTs or server-side sessions. In a real Steamworks integration, validate the Steam ticket server-side against Steam Web API and generate a signed session token with expiration.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">8</td>
-      <td><span class="source">Active suite</span></td>
-      <td><strong>Client-Side Trust in Transaction Finalization</strong></td>
-      <td><span class="sev" style="background:#7f1d1d">Critical</span></td>
-      <td class="owasp">API6:2023 Unrestricted Access to Sensitive Business Flows</td>
-      <td><span class="badge badge--confirmed">CONFIRMED</span></td>
-      <td><code>/vulnerable/transactions/finalize</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;attacker_user_id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-  &quot;initial_credits&quot;: 777777,
-  &quot;final_credits&quot;: 782777,
-  &quot;amount&quot;: 5000,
-  &quot;order_id&quot;: &quot;ORDER_FRAUD_d3d9305b-779c-4b83-9743-9334ce1b748a&quot;,
-  &quot;init_response&quot;: {
-    &quot;id&quot;: &quot;8cffa5e3-44ce-413c-a17a-1f886e722c4a&quot;,
-    &quot;order_id&quot;: &quot;ORDER_FRAUD_d3d9305b-779c-4b83-9743-9334ce1b748a&quot;,
-    &quot;item_name&quot;: &quot;Mega Coins Pack&quot;,
-    &quot;amount&quot;: 5000,
-    &quot;approved_by_client&quot;: false,
-    &quot;finalized&quot;: false,
-    &quot;owner_id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;
-  },
-  &quot;finalize_response&quot;: {
-    &quot;id&quot;: &quot;8cffa5e3-44ce-413c-a17a-1f886e722c4a&quot;,
-    &quot;order_id&quot;: &quot;ORDER_FRAUD_d3d9305b-779c-4b83-9743-9334ce1b748a&quot;,
-    &quot;item_name&quot;: &quot;Mega Coins Pack&quot;,
-    &quot;amount&quot;: 5000,
-    &quot;approved_by_client&quot;: false,
-    &quot;finalized&quot;: true,
-    &quot;owner_id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;
-  },
-  &quot;secure_status_code&quot;: 403
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Never trust approved_by_client or any payment state sent by the client. The backend must verify the transaction directly with Steam Web API or a trusted payment provider before granting credits or virtual items.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">9</td>
-      <td><span class="source">Active suite</span></td>
-      <td><strong>Weak Token Integrity / User Impersonation</strong></td>
-      <td><span class="sev" style="background:#7f1d1d">Critical</span></td>
-      <td class="owasp">API2:2023 Broken Authentication</td>
-      <td><span class="badge badge--confirmed">CONFIRMED</span></td>
-      <td><code>/users/me</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;attacker_user_id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-  &quot;victim_user_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;,
-  &quot;victim_steam_id&quot;: &quot;76561198000000003&quot;,
-  &quot;status_code&quot;: 200,
-  &quot;response_body&quot;: {
-    &quot;id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;,
-    &quot;steam_id&quot;: &quot;76561198000000003&quot;,
-    &quot;username&quot;: &quot;Victim_Test&quot;,
-    &quot;credits&quot;: 100,
-    &quot;is_admin&quot;: false
-  }
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Replace unsigned Base64 tokens with signed JWTs or server-side sessions. In a real Steamworks integration, validate the Steam ticket server-side against Steam Web API and generate a signed session token with expiration.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">10</td>
-      <td><span class="source">Active suite</span></td>
-      <td><strong>Broken Object Property Level Authorization / Mass Assignment</strong></td>
-      <td><span class="sev" style="background:#dc2626">High</span></td>
-      <td class="owasp">API3:2023 Broken Object Property Level Authorization</td>
-      <td><span class="badge badge--confirmed">CONFIRMED</span></td>
-      <td><code>/vulnerable/users/me</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;initial_profile&quot;: {
-    &quot;id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-    &quot;steam_id&quot;: &quot;76561198000000002&quot;,
-    &quot;username&quot;: &quot;SafeMassAssignmentUser&quot;,
-    &quot;credits&quot;: 782777,
-    &quot;is_admin&quot;: false
-  },
-  &quot;vulnerable_payload&quot;: {
-    &quot;username&quot;: &quot;MassAssignmentUser&quot;,
-    &quot;credits&quot;: 777777
-  },
-  &quot;vulnerable_response&quot;: {
-    &quot;id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-    &quot;steam_id&quot;: &quot;76561198000000002&quot;,
-    &quot;username&quot;: &quot;MassAssignmentUser&quot;,
-    &quot;credits&quot;: 777777,
-    &quot;is_admin&quot;: false
-  },
-  &quot;secure_payload&quot;: {
-    &quot;username&quot;: &quot;SafeMassAssignmentUser&quot;,
-    &quot;credits&quot;: 1
-  },
-  &quot;secure_response&quot;: {
-    &quot;id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-    &quot;steam_id&quot;: &quot;76561198000000002&quot;,
-    &quot;username&quot;: &quot;SafeMassAssignmentUser&quot;,
-    &quot;credits&quot;: 777777,
-    &quot;is_admin&quot;: false
-  },
-  &quot;expected_secure_behavior&quot;: &quot;username is updated, but credits remains unchanged&quot;
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Use strict input DTOs and whitelist only the fields that the client is allowed to modify. Sensitive fields such as credits and is_admin must never be accepted from client-controlled JSON.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">11</td>
-      <td><span class="source">Active suite</span></td>
-      <td><strong>Broken Object Level Authorization (BOLA)</strong></td>
-      <td><span class="sev" style="background:#dc2626">High</span></td>
-      <td class="owasp">API1:2023 Broken Object Level Authorization</td>
-      <td><span class="badge badge--confirmed">CONFIRMED</span></td>
-      <td><code>/vulnerable/inventory/{user_id}</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;attacker_user_id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-  &quot;victim_user_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;,
-  &quot;vulnerable_status_code&quot;: 200,
-  &quot;secure_status_code&quot;: 403,
-  &quot;returned_items&quot;: [
-    {
-      &quot;id&quot;: &quot;fd80dccf-884b-42b1-ae9b-b04bd5dc42bc&quot;,
-      &quot;item_name&quot;: &quot;Starter Sword&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;53dae246-5e3d-4ff3-bb13-441dcbf89c1a&quot;,
-      &quot;item_name&quot;: &quot;Golden_AK47_928e2606-327d-44e7-8e05-571d51f44c9b&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;7a2f76af-f3de-4f43-a080-dffdbc29818d&quot;,
-      &quot;item_name&quot;: &quot;Golden Sword 762325cc-8168-43fe-9ba6-44c15d5f475b&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;29c9b086-a037-467b-aa4e-16ce00afd0e4&quot;,
-      &quot;item_name&quot;: &quot;Golden Sword 31bb4883-5ccf-4803-9719-ba4efdf45866&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;9b802e75-c6f3-49fc-a6b8-f466ee08f032&quot;,
-      &quot;item_name&quot;: &quot;Golden Sword 8cba6b91-de91-469a-b18c-ba8245c30229&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;aabd8240-74d7-4d82-b045-c768ec01f1e2&quot;,
-      &quot;item_name&quot;: &quot;Golden Sword f6b3acfa-d4ef-4ffa-940e-6ebe6f326379&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;e1a49f28-08b8-4f6f-8ad8-cab640b86d7a&quot;,
-      &quot;item_name&quot;: &quot;Golden Sword a92af437-d504-4d04-92e9-696d310d5fae&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;13cfefe1-433b-43b5-b29f-a456bbab25f7&quot;,
-      &quot;item_name&quot;: &quot;Golden Sword f0b8ab0b-b481-4378-9f65-9eaf4eb77160&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    }
-  ]
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Validate that the requested user_id matches the authenticated user_id extracted from the token before querying inventory data.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">12</td>
-      <td><span class="source">Active suite</span></td>
-      <td><strong>Broken Object Level Authorization (BOLA)</strong></td>
-      <td><span class="sev" style="background:#dc2626">High</span></td>
-      <td class="owasp">API1:2023 Broken Object Level Authorization</td>
-      <td><span class="badge badge--confirmed">CONFIRMED</span></td>
-      <td><code>/vulnerable/inventory/{user_id}</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;attacker_user_id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-  &quot;victim_user_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;,
-  &quot;vulnerable_status_code&quot;: 200,
-  &quot;secure_status_code&quot;: 403,
-  &quot;returned_items&quot;: [
-    {
-      &quot;id&quot;: &quot;fd80dccf-884b-42b1-ae9b-b04bd5dc42bc&quot;,
-      &quot;item_name&quot;: &quot;Starter Sword&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;53dae246-5e3d-4ff3-bb13-441dcbf89c1a&quot;,
-      &quot;item_name&quot;: &quot;Golden_AK47_928e2606-327d-44e7-8e05-571d51f44c9b&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;7a2f76af-f3de-4f43-a080-dffdbc29818d&quot;,
-      &quot;item_name&quot;: &quot;Golden Sword 762325cc-8168-43fe-9ba6-44c15d5f475b&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;29c9b086-a037-467b-aa4e-16ce00afd0e4&quot;,
-      &quot;item_name&quot;: &quot;Golden Sword 31bb4883-5ccf-4803-9719-ba4efdf45866&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;9b802e75-c6f3-49fc-a6b8-f466ee08f032&quot;,
-      &quot;item_name&quot;: &quot;Golden Sword 8cba6b91-de91-469a-b18c-ba8245c30229&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;aabd8240-74d7-4d82-b045-c768ec01f1e2&quot;,
-      &quot;item_name&quot;: &quot;Golden Sword f6b3acfa-d4ef-4ffa-940e-6ebe6f326379&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;e1a49f28-08b8-4f6f-8ad8-cab640b86d7a&quot;,
-      &quot;item_name&quot;: &quot;Golden Sword a92af437-d504-4d04-92e9-696d310d5fae&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;13cfefe1-433b-43b5-b29f-a456bbab25f7&quot;,
-      &quot;item_name&quot;: &quot;Golden Sword f0b8ab0b-b481-4378-9f65-9eaf4eb77160&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    },
-    {
-      &quot;id&quot;: &quot;ce23e198-10d0-4a79-bb67-3532d5b19c5d&quot;,
-      &quot;item_name&quot;: &quot;Golden Sword a2bf3974-c7cb-4a74-95bb-690e26c49414&quot;,
-      &quot;quantity&quot;: 1,
-      &quot;owner_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-    }
-  ]
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Validate that the requested user_id matches the authenticated user_id extracted from the token before querying inventory data.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">13</td>
-      <td><span class="source">Active suite</span></td>
-      <td><strong>Broken Object Property Level Authorization / Mass Assignment</strong></td>
-      <td><span class="sev" style="background:#dc2626">High</span></td>
-      <td class="owasp">API3:2023 Broken Object Property Level Authorization</td>
-      <td><span class="badge badge--confirmed">CONFIRMED</span></td>
-      <td><code>/vulnerable/users/me</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;initial_profile&quot;: {
-    &quot;id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-    &quot;steam_id&quot;: &quot;76561198000000002&quot;,
-    &quot;username&quot;: &quot;SafeMassAssignmentUser&quot;,
-    &quot;credits&quot;: 777777,
-    &quot;is_admin&quot;: false
-  },
-  &quot;vulnerable_payload&quot;: {
-    &quot;username&quot;: &quot;MassAssignmentUser&quot;,
-    &quot;credits&quot;: 777777
-  },
-  &quot;vulnerable_response&quot;: {
-    &quot;id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-    &quot;steam_id&quot;: &quot;76561198000000002&quot;,
-    &quot;username&quot;: &quot;MassAssignmentUser&quot;,
-    &quot;credits&quot;: 777777,
-    &quot;is_admin&quot;: false
-  },
-  &quot;secure_payload&quot;: {
-    &quot;username&quot;: &quot;SafeMassAssignmentUser&quot;,
-    &quot;credits&quot;: 1
-  },
-  &quot;secure_response&quot;: {
-    &quot;id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-    &quot;steam_id&quot;: &quot;76561198000000002&quot;,
-    &quot;username&quot;: &quot;SafeMassAssignmentUser&quot;,
-    &quot;credits&quot;: 777777,
-    &quot;is_admin&quot;: false
-  },
-  &quot;expected_secure_behavior&quot;: &quot;username is updated, but credits remains unchanged&quot;
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Use strict input DTOs and whitelist only the fields that the client is allowed to modify. Sensitive fields such as credits and is_admin must never be accepted from client-controlled JSON.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">14</td>
-      <td><span class="source">Cerberus (passive)</span></td>
-      <td><strong>Broken Object Level Authorization (BOLA)</strong></td>
-      <td><span class="sev" style="background:#dc2626">High</span></td>
-      <td class="owasp">API1:2023 Broken Object Level Authorization</td>
-      <td><span class="badge badge--confirmed">CONFIRMED</span></td>
-      <td><code>/vulnerable/inventory/{user_id}</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;method&quot;: &quot;GET&quot;,
-  &quot;path&quot;: &quot;/vulnerable/inventory/28cde77b-b881-48e4-8e4e-76011f618fc8&quot;,
-  &quot;status_code&quot;: 200,
-  &quot;authenticated_user_id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-  &quot;requested_user_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Validate that the requested user_id matches the authenticated user_id before returning inventory resources.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">15</td>
-      <td><span class="source">Cerberus (passive)</span></td>
-      <td><strong>Sensitive Client-Controlled Property</strong></td>
-      <td><span class="sev" style="background:#d97706">Medium</span></td>
-      <td class="owasp">API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow</td>
-      <td><span class="badge badge--observed">OBSERVED</span></td>
-      <td><code>/vulnerable/users/me</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;method&quot;: &quot;PATCH&quot;,
-  &quot;path&quot;: &quot;/vulnerable/users/me&quot;,
-  &quot;detected_fields&quot;: [
-    &quot;credits&quot;
-  ],
-  &quot;request_body&quot;: {
-    &quot;username&quot;: &quot;MassAssignmentUser&quot;,
-    &quot;credits&quot;: 777777
-  }
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Reject or ignore client-controlled sensitive fields such as credits, is_admin, role and approved_by_client.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">16</td>
-      <td><span class="source">Cerberus (passive)</span></td>
-      <td><strong>Sensitive Client-Controlled Property</strong></td>
-      <td><span class="sev" style="background:#d97706">Medium</span></td>
-      <td class="owasp">API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow</td>
-      <td><span class="badge badge--observed">OBSERVED</span></td>
-      <td><code>/secure/users/me</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;method&quot;: &quot;PATCH&quot;,
-  &quot;path&quot;: &quot;/secure/users/me&quot;,
-  &quot;detected_fields&quot;: [
-    &quot;credits&quot;
-  ],
-  &quot;request_body&quot;: {
-    &quot;username&quot;: &quot;SafeMassAssignmentUser&quot;,
-    &quot;credits&quot;: 1
-  }
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Reject or ignore client-controlled sensitive fields such as credits, is_admin, role and approved_by_client.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">17</td>
-      <td><span class="source">Cerberus (passive)</span></td>
-      <td><strong>Sensitive Client-Controlled Property</strong></td>
-      <td><span class="sev" style="background:#d97706">Medium</span></td>
-      <td class="owasp">API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow</td>
-      <td><span class="badge badge--observed">OBSERVED</span></td>
-      <td><code>/vulnerable/transactions/finalize</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;method&quot;: &quot;POST&quot;,
-  &quot;path&quot;: &quot;/vulnerable/transactions/finalize&quot;,
-  &quot;detected_fields&quot;: [
-    &quot;approved_by_client&quot;
-  ],
-  &quot;request_body&quot;: {
-    &quot;order_id&quot;: &quot;ORDER_FRAUD_893ecc52-fbeb-40c9-b84b-1ccb86549bf5&quot;,
-    &quot;approved_by_client&quot;: true
-  }
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Reject or ignore client-controlled sensitive fields such as credits, is_admin, role and approved_by_client.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">18</td>
-      <td><span class="source">Cerberus (passive)</span></td>
-      <td><strong>Client-Side Transaction Approval Attempt</strong></td>
-      <td><span class="sev" style="background:#dc2626">High</span></td>
-      <td class="owasp">API6:2023 Unrestricted Access to Sensitive Business Flows</td>
-      <td><span class="badge badge--observed">OBSERVED</span></td>
-      <td><code>/vulnerable/transactions/finalize</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;method&quot;: &quot;POST&quot;,
-  &quot;path&quot;: &quot;/vulnerable/transactions/finalize&quot;,
-  &quot;request_body&quot;: {
-    &quot;order_id&quot;: &quot;ORDER_FRAUD_893ecc52-fbeb-40c9-b84b-1ccb86549bf5&quot;,
-    &quot;approved_by_client&quot;: true
-  }
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> The backend must verify payment state server-side against Steam Web API or another trusted payment provider.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">19</td>
       <td><span class="source">Cerberus (passive)</span></td>
       <td><strong>Sensitive Client-Controlled Property</strong></td>
       <td><span class="sev" style="background:#d97706">Medium</span></td>
@@ -1191,353 +513,8 @@
     &quot;approved_by_client&quot;
   ],
   &quot;request_body&quot;: {
-    &quot;order_id&quot;: &quot;ORDER_SECURE_c267307e-3ab7-49e5-85be-6026cd67473b&quot;,
+    &quot;order_id&quot;: &quot;ORDER_SECURE_820bfe58-4c61-4b9d-b44c-f9bf6976bbe4&quot;,
     &quot;approved_by_client&quot;: true
-  }
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Reject or ignore client-controlled sensitive fields such as credits, is_admin, role and approved_by_client.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">20</td>
-      <td><span class="source">Cerberus (passive)</span></td>
-      <td><strong>Broken Object Level Authorization (BOLA)</strong></td>
-      <td><span class="sev" style="background:#dc2626">High</span></td>
-      <td class="owasp">API1:2023 Broken Object Level Authorization</td>
-      <td><span class="badge badge--confirmed">CONFIRMED</span></td>
-      <td><code>/vulnerable/inventory/{user_id}</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;method&quot;: &quot;GET&quot;,
-  &quot;path&quot;: &quot;/vulnerable/inventory/28cde77b-b881-48e4-8e4e-76011f618fc8&quot;,
-  &quot;status_code&quot;: 200,
-  &quot;authenticated_user_id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-  &quot;requested_user_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Validate that the requested user_id matches the authenticated user_id before returning inventory resources.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">21</td>
-      <td><span class="source">Cerberus (passive)</span></td>
-      <td><strong>Sensitive Client-Controlled Property</strong></td>
-      <td><span class="sev" style="background:#d97706">Medium</span></td>
-      <td class="owasp">API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow</td>
-      <td><span class="badge badge--observed">OBSERVED</span></td>
-      <td><code>/vulnerable/users/me</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;method&quot;: &quot;PATCH&quot;,
-  &quot;path&quot;: &quot;/vulnerable/users/me&quot;,
-  &quot;detected_fields&quot;: [
-    &quot;credits&quot;
-  ],
-  &quot;request_body&quot;: {
-    &quot;username&quot;: &quot;MassAssignmentUser&quot;,
-    &quot;credits&quot;: 777777
-  }
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Reject or ignore client-controlled sensitive fields such as credits, is_admin, role and approved_by_client.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">22</td>
-      <td><span class="source">Cerberus (passive)</span></td>
-      <td><strong>Sensitive Client-Controlled Property</strong></td>
-      <td><span class="sev" style="background:#d97706">Medium</span></td>
-      <td class="owasp">API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow</td>
-      <td><span class="badge badge--observed">OBSERVED</span></td>
-      <td><code>/secure/users/me</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;method&quot;: &quot;PATCH&quot;,
-  &quot;path&quot;: &quot;/secure/users/me&quot;,
-  &quot;detected_fields&quot;: [
-    &quot;credits&quot;
-  ],
-  &quot;request_body&quot;: {
-    &quot;username&quot;: &quot;SafeMassAssignmentUser&quot;,
-    &quot;credits&quot;: 1
-  }
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Reject or ignore client-controlled sensitive fields such as credits, is_admin, role and approved_by_client.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">23</td>
-      <td><span class="source">Cerberus (passive)</span></td>
-      <td><strong>Sensitive Client-Controlled Property</strong></td>
-      <td><span class="sev" style="background:#d97706">Medium</span></td>
-      <td class="owasp">API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow</td>
-      <td><span class="badge badge--observed">OBSERVED</span></td>
-      <td><code>/vulnerable/transactions/finalize</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;method&quot;: &quot;POST&quot;,
-  &quot;path&quot;: &quot;/vulnerable/transactions/finalize&quot;,
-  &quot;detected_fields&quot;: [
-    &quot;approved_by_client&quot;
-  ],
-  &quot;request_body&quot;: {
-    &quot;order_id&quot;: &quot;ORDER_FRAUD_d3d9305b-779c-4b83-9743-9334ce1b748a&quot;,
-    &quot;approved_by_client&quot;: true
-  }
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Reject or ignore client-controlled sensitive fields such as credits, is_admin, role and approved_by_client.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">24</td>
-      <td><span class="source">Cerberus (passive)</span></td>
-      <td><strong>Client-Side Transaction Approval Attempt</strong></td>
-      <td><span class="sev" style="background:#dc2626">High</span></td>
-      <td class="owasp">API6:2023 Unrestricted Access to Sensitive Business Flows</td>
-      <td><span class="badge badge--observed">OBSERVED</span></td>
-      <td><code>/vulnerable/transactions/finalize</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;method&quot;: &quot;POST&quot;,
-  &quot;path&quot;: &quot;/vulnerable/transactions/finalize&quot;,
-  &quot;request_body&quot;: {
-    &quot;order_id&quot;: &quot;ORDER_FRAUD_d3d9305b-779c-4b83-9743-9334ce1b748a&quot;,
-    &quot;approved_by_client&quot;: true
-  }
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> The backend must verify payment state server-side against Steam Web API or another trusted payment provider.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">25</td>
-      <td><span class="source">Cerberus (passive)</span></td>
-      <td><strong>Sensitive Client-Controlled Property</strong></td>
-      <td><span class="sev" style="background:#d97706">Medium</span></td>
-      <td class="owasp">API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow</td>
-      <td><span class="badge badge--observed">OBSERVED</span></td>
-      <td><code>/secure/transactions/finalize</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;method&quot;: &quot;POST&quot;,
-  &quot;path&quot;: &quot;/secure/transactions/finalize&quot;,
-  &quot;detected_fields&quot;: [
-    &quot;approved_by_client&quot;
-  ],
-  &quot;request_body&quot;: {
-    &quot;order_id&quot;: &quot;ORDER_SECURE_9fb674c9-e6e9-43ca-b4e7-66f716c287b5&quot;,
-    &quot;approved_by_client&quot;: true
-  }
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Reject or ignore client-controlled sensitive fields such as credits, is_admin, role and approved_by_client.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">26</td>
-      <td><span class="source">Cerberus (passive)</span></td>
-      <td><strong>Sensitive Client-Controlled Property</strong></td>
-      <td><span class="sev" style="background:#d97706">Medium</span></td>
-      <td class="owasp">API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow</td>
-      <td><span class="badge badge--observed">OBSERVED</span></td>
-      <td><code>/vulnerable/users/me</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;method&quot;: &quot;PATCH&quot;,
-  &quot;path&quot;: &quot;/vulnerable/users/me&quot;,
-  &quot;detected_fields&quot;: [
-    &quot;credits&quot;
-  ],
-  &quot;request_body&quot;: {
-    &quot;username&quot;: &quot;MassAssignmentUser&quot;,
-    &quot;credits&quot;: 777777
-  }
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Reject or ignore client-controlled sensitive fields such as credits, is_admin, role and approved_by_client.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">27</td>
-      <td><span class="source">Cerberus (passive)</span></td>
-      <td><strong>Sensitive Client-Controlled Property</strong></td>
-      <td><span class="sev" style="background:#d97706">Medium</span></td>
-      <td class="owasp">API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow</td>
-      <td><span class="badge badge--observed">OBSERVED</span></td>
-      <td><code>/secure/users/me</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;method&quot;: &quot;PATCH&quot;,
-  &quot;path&quot;: &quot;/secure/users/me&quot;,
-  &quot;detected_fields&quot;: [
-    &quot;credits&quot;
-  ],
-  &quot;request_body&quot;: {
-    &quot;username&quot;: &quot;SafeMassAssignmentUser&quot;,
-    &quot;credits&quot;: 1
-  }
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Reject or ignore client-controlled sensitive fields such as credits, is_admin, role and approved_by_client.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">28</td>
-      <td><span class="source">Cerberus (passive)</span></td>
-      <td><strong>Broken Object Level Authorization (BOLA)</strong></td>
-      <td><span class="sev" style="background:#dc2626">High</span></td>
-      <td class="owasp">API1:2023 Broken Object Level Authorization</td>
-      <td><span class="badge badge--confirmed">CONFIRMED</span></td>
-      <td><code>/vulnerable/inventory/{user_id}</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;method&quot;: &quot;GET&quot;,
-  &quot;path&quot;: &quot;/vulnerable/inventory/28cde77b-b881-48e4-8e4e-76011f618fc8&quot;,
-  &quot;status_code&quot;: 200,
-  &quot;authenticated_user_id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-  &quot;requested_user_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Validate that the requested user_id matches the authenticated user_id before returning inventory resources.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">29</td>
-      <td><span class="source">Cerberus (passive)</span></td>
-      <td><strong>Broken Object Level Authorization (BOLA)</strong></td>
-      <td><span class="sev" style="background:#dc2626">High</span></td>
-      <td class="owasp">API1:2023 Broken Object Level Authorization</td>
-      <td><span class="badge badge--confirmed">CONFIRMED</span></td>
-      <td><code>/vulnerable/inventory/{user_id}</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;method&quot;: &quot;GET&quot;,
-  &quot;path&quot;: &quot;/vulnerable/inventory/28cde77b-b881-48e4-8e4e-76011f618fc8&quot;,
-  &quot;status_code&quot;: 200,
-  &quot;authenticated_user_id&quot;: &quot;731bc566-e0d6-41c8-9819-28f0d73bb3a4&quot;,
-  &quot;requested_user_id&quot;: &quot;28cde77b-b881-48e4-8e4e-76011f618fc8&quot;
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Validate that the requested user_id matches the authenticated user_id before returning inventory resources.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">30</td>
-      <td><span class="source">Cerberus (passive)</span></td>
-      <td><strong>Sensitive Client-Controlled Property</strong></td>
-      <td><span class="sev" style="background:#d97706">Medium</span></td>
-      <td class="owasp">API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow</td>
-      <td><span class="badge badge--observed">OBSERVED</span></td>
-      <td><code>/vulnerable/users/me</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;method&quot;: &quot;PATCH&quot;,
-  &quot;path&quot;: &quot;/vulnerable/users/me&quot;,
-  &quot;detected_fields&quot;: [
-    &quot;credits&quot;
-  ],
-  &quot;request_body&quot;: {
-    &quot;username&quot;: &quot;MassAssignmentUser&quot;,
-    &quot;credits&quot;: 777777
-  }
-}</pre>
-          <p class="mitigation"><strong>Mitigation:</strong> Reject or ignore client-controlled sensitive fields such as credits, is_admin, role and approved_by_client.</p>
-        </details>
-      </td>
-    </tr>
-    
-
-    <tr>
-      <td class="num">31</td>
-      <td><span class="source">Cerberus (passive)</span></td>
-      <td><strong>Sensitive Client-Controlled Property</strong></td>
-      <td><span class="sev" style="background:#d97706">Medium</span></td>
-      <td class="owasp">API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow</td>
-      <td><span class="badge badge--observed">OBSERVED</span></td>
-      <td><code>/secure/users/me</code></td>
-    </tr>
-    <tr class="evidence-row">
-      <td colspan="7">
-        <details>
-          <summary>Technical evidence &amp; mitigation</summary>
-          <pre>{
-  &quot;method&quot;: &quot;PATCH&quot;,
-  &quot;path&quot;: &quot;/secure/users/me&quot;,
-  &quot;detected_fields&quot;: [
-    &quot;credits&quot;
-  ],
-  &quot;request_body&quot;: {
-    &quot;username&quot;: &quot;SafeMassAssignmentUser&quot;,
-    &quot;credits&quot;: 1
   }
 }</pre>
           <p class="mitigation"><strong>Mitigation:</strong> Reject or ignore client-controlled sensitive fields such as credits, is_admin, role and approved_by_client.</p>
@@ -1568,10 +545,10 @@
   new Chart(sevChartCtx, {
     type: 'doughnut',
     data: {
-      labels: ["Critical", "High", "Medium"],
+      labels: ["High", "Medium"],
       datasets: [{
-        data: [5, 14, 12],
-        backgroundColor: ["#7f1d1d", "#dc2626", "#d97706"],
+        data: [2, 4],
+        backgroundColor: ["#dc2626", "#d97706"],
         borderColor: '#ffffff',
         borderWidth: 2,
       }]
@@ -1593,10 +570,10 @@
   new Chart(catChartCtx, {
     type: 'bar',
     data: {
-      labels: ["API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow", "API1:2023 Broken Object Level Authorization", "API3:2023 Broken Object Property Level Authorization", "API6:2023 Unrestricted Access to Sensitive Business Flows", "API2:2023 Broken Authentication"],
+      labels: ["API3:2023 Broken Object Property Level Authorization / API6:2023 Sensitive Business Flow", "API1:2023 Broken Object Level Authorization", "API6:2023 Unrestricted Access to Sensitive Business Flows"],
       datasets: [{
         label: 'Findings',
-        data: [12, 8, 4, 4, 3],
+        data: [4, 1, 1],
         backgroundColor: palette.accent,
         borderRadius: 6,
         maxBarThickness: 28,

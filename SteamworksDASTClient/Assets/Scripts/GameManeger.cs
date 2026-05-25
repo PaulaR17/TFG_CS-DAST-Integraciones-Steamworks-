@@ -31,8 +31,14 @@ public class GameManager : MonoBehaviour
 
     void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
-        Instance = this;
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+        }
+        else
+        {
+            Instance = this;
+        }
     }
 
     void Start()
@@ -76,22 +82,24 @@ public class GameManager : MonoBehaviour
 
     public void AddScore(int amount)
     {
-        if (isGameOver) return;
-        score += amount;
-
-        // Recompensa de credits por kill (feedback inmediato, sin llamar al backend).
-        // El saldo persistente del backend se actualiza solo en login/purchase.
-        if (ApiClient.Instance != null && creditsPerKill > 0)
-            ApiClient.Instance.AddLocalCredits(creditsPerKill);
-
-        UpdateHUD();
-
-        if (!achievement100Unlocked && score >= 100)
+        if (!isGameOver)
         {
-            achievement100Unlocked = true;
-            ApiClient.Instance.UnlockAchievement("FIRST_100_POINTS",
-                () => Debug.Log("[GM] Logro desbloqueado"),
-                (err) => Debug.LogError("[GM] Achievement error: " + err));
+            score += amount;
+
+            // Recompensa de credits por kill (feedback inmediato, sin llamar al backend).
+            // El saldo persistente del backend se actualiza solo en login/purchase.
+            if (ApiClient.Instance != null && creditsPerKill > 0)
+                ApiClient.Instance.AddLocalCredits(creditsPerKill);
+
+            UpdateHUD();
+
+            if (!achievement100Unlocked && score >= 100)
+            {
+                achievement100Unlocked = true;
+                ApiClient.Instance.UnlockAchievement("FIRST_100_POINTS",
+                    () => Debug.Log("[GM] Logro desbloqueado"),
+                    (err) => Debug.LogError("[GM] Achievement error: " + err));
+            }
         }
     }
 
@@ -104,10 +112,12 @@ public class GameManager : MonoBehaviour
 
     public void TakeDamage()
     {
-        if (isGameOver) return;
-        health--;
-        UpdateHUD();
-        if (health <= 0) GameOver();
+        if (!isGameOver)
+        {
+            health--;
+            UpdateHUD();
+            if (health <= 0) GameOver();
+        }
     }
 
     public void GameOver()

@@ -112,7 +112,9 @@ def run_bopla_attack() -> bool:
             )
         )
 
-        return confirmed and secure_username_changed
+        attack_success = confirmed and secure_username_changed
+
+    return attack_success
 
 
 if __name__ == "__main__":

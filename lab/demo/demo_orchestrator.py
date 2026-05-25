@@ -53,23 +53,25 @@ def run_attack(key, name, script):
     print(color(f"[{now()}] >>> Lanzando: {name}", "33;1"))
     print(color(f"           script: {script}", "90"))
     script_path = ATTACKS_DIR / script
+
+    ok = False
     if not script_path.exists():
         print(color(f"[ERROR] No existe {script_path}", "31"))
-        return False
+    else:
+        try:
+            result = subprocess.run(
+                [sys.executable, str(script_path)],
+                cwd=str(ATTACKS_DIR.parent),
+                timeout=60,
+            )
+            ok = result.returncode == 0
+            marker = color("[OK]", "32;1") if ok else color("[FAIL]", "31;1")
+            print(f"[{now()}] {marker} {name}")
+        except subprocess.TimeoutExpired:
+            print(color(f"[{now()}] [TIMEOUT] {name}", "31"))
+            ok = False
 
-    try:
-        result = subprocess.run(
-            [sys.executable, str(script_path)],
-            cwd=str(ATTACKS_DIR.parent),
-            timeout=60,
-        )
-        ok = result.returncode == 0
-        marker = color("[OK]", "32;1") if ok else color("[FAIL]", "31;1")
-        print(f"[{now()}] {marker} {name}")
-        return ok
-    except subprocess.TimeoutExpired:
-        print(color(f"[{now()}] [TIMEOUT] {name}", "31"))
-        return False
+    return ok
 
 
 def run_round(selected, timing):
@@ -133,22 +135,21 @@ def main():
     if args.mode != "loop":
         results = run_round(selected, timing)
         print_summary(results)
-        return
-
-    # modo loop: para grabación de demo larga
-    round_num = 0
-    try:
-        while args.rounds == 0 or round_num < args.rounds:
-            round_num += 1
-            banner(f"ROUND {round_num}", "-")
-            results = run_round(selected, timing)
-            print_summary(results)
-            if args.rounds == 0 or round_num < args.rounds:
-                print(color(f"[{now()}] Esperando {args.interval}s para siguiente ronda...", "90"))
-                time.sleep(args.interval)
-    except KeyboardInterrupt:
-        print()
-        print(color(f"[{now()}] Demo interrumpida por usuario.", "33"))
+    else:
+        # modo loop: para grabación de demo larga
+        round_num = 0
+        try:
+            while args.rounds == 0 or round_num < args.rounds:
+                round_num += 1
+                banner(f"ROUND {round_num}", "-")
+                results = run_round(selected, timing)
+                print_summary(results)
+                if args.rounds == 0 or round_num < args.rounds:
+                    print(color(f"[{now()}] Esperando {args.interval}s para siguiente ronda...", "90"))
+                    time.sleep(args.interval)
+        except KeyboardInterrupt:
+            print()
+            print(color(f"[{now()}] Demo interrumpida por usuario.", "33"))
 
 
 if __name__ == "__main__":

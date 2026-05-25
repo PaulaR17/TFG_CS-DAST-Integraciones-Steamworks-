@@ -109,11 +109,7 @@ def create_client() -> httpx.Client:
 
     if USE_PROXY:
         print(f"[HTTP] PROXY_URL={PROXY_URL}")
-
-        return httpx.Client(
-            **client_kwargs,
-            proxy=PROXY_URL
-        )
+        client_kwargs["proxy"] = PROXY_URL
 
     return httpx.Client(**client_kwargs)
 

@@ -15,18 +15,14 @@ REPORT_FILE = REPORTS_DIR / "audit_report.md"
 
 def load_jsonl_file(path: Path) -> List[Dict[str, Any]]:
 
-    if not path.exists():
-        return []
     findings: List[Dict[str, Any]] = []
 
-    with path.open("r", encoding="utf-8") as file:
-        for line in file:
-            line = line.strip()
-
-            if not line:
-                continue
-
-            findings.append(json.loads(line))
+    if path.exists():
+        with path.open("r", encoding="utf-8") as file:
+            for line in file:
+                line = line.strip()
+                if line:
+                    findings.append(json.loads(line))
 
     return findings
 
@@ -44,26 +40,21 @@ def severity_rank(severity: str) -> int: #convierte la severidad en numero para 
 
 
 def finding_source_label(finding: Dict[str, Any]) -> str: #devuelve un nombre legible para saber de donde salio el hallazgo.
-    
+
     source = finding.get("source", "unknown")
+    labels = {
+        "automated_attack_script": "Active attack module",
+        "cerberus_mitmproxy": "Cerberus proxy observer",
+    }
 
-    if source == "automated_attack_script":
-        return "Active attack module"
-
-    if source == "cerberus_mitmproxy":
-        return "Cerberus proxy observer"
-
-    return str(source)
+    return labels.get(source, str(source))
 
 
 def confirmed_text(finding: Dict[str, Any]) -> str: #pasa el booleano confirmed a texto para el informe.
 
-    confirmed = finding.get("confirmed", False)
+    label = "Confirmed" if finding.get("confirmed", False) else "Observed"
 
-    if confirmed:
-        return "Confirmed"
-
-    return "Observed"
+    return label
 
 
 def generate_report() -> None: #genera el informe markdown juntando ataques activos y observaciones de cerberus.
@@ -119,57 +110,54 @@ def generate_report() -> None: #genera el informe markdown juntando ataques acti
 
     if not all_findings:
         lines.append("No findings were found. Run the attack scripts first.")
-        REPORT_FILE.write_text("\n".join(lines), encoding="utf-8")
-        print(f"Report generated: {REPORT_FILE}")
-        return
+    else:
+        #tabla rapida con todos los hallazgos
 
-    #tabla rapida con todos los hallazgos
-
-    lines.append("## Findings Overview")
-    lines.append("")
-    lines.append(
-        "| # | Source | Vulnerability | Severity | OWASP Category | Status | Endpoint |"
-    )
-    lines.append(
-        "|---|---|---|---|---|---|---|"
-    )
-
-    for index, finding in enumerate(all_findings, start=1):
+        lines.append("## Findings Overview")
+        lines.append("")
         lines.append(
-            f"| {index} "
-            f"| {finding_source_label(finding)} "
-            f"| {finding.get('vulnerability', '')} "
-            f"| {finding.get('severity', '')} "
-            f"| {finding.get('owasp_category', '')} "
-            f"| {confirmed_text(finding)} "
-            f"| `{finding.get('endpoint', '')}` |"
+            "| # | Source | Vulnerability | Severity | OWASP Category | Status | Endpoint |"
+        )
+        lines.append(
+            "|---|---|---|---|---|---|---|"
         )
 
-    lines.append("")
+        for index, finding in enumerate(all_findings, start=1):
+            lines.append(
+                f"| {index} "
+                f"| {finding_source_label(finding)} "
+                f"| {finding.get('vulnerability', '')} "
+                f"| {finding.get('severity', '')} "
+                f"| {finding.get('owasp_category', '')} "
+                f"| {confirmed_text(finding)} "
+                f"| `{finding.get('endpoint', '')}` |"
+            )
 
-    #detalle de los fallos confirmados por ataques activos
-
-    lines.append("## Confirmed Findings from Active Attack Modules")
-    lines.append("")
-
-    if not active_findings:
-        lines.append("No active attack findings were generated.")
         lines.append("")
-    else:
-        for index, finding in enumerate(active_findings, start=1):
-            append_finding_details(lines, index, finding)
 
-    #detalle de lo que vio cerberus mirando el trafico
+        #detalle de los fallos confirmados por ataques activos
 
-    lines.append("## Observations from Cerberus Proxy")
-    lines.append("")
-
-    if not cerberus_findings:
-        lines.append("No Cerberus proxy findings were generated.")
+        lines.append("## Confirmed Findings from Active Attack Modules")
         lines.append("")
-    else:
-        for index, finding in enumerate(cerberus_findings, start=1):
-            append_finding_details(lines, index, finding)
+
+        if not active_findings:
+            lines.append("No active attack findings were generated.")
+            lines.append("")
+        else:
+            for index, finding in enumerate(active_findings, start=1):
+                append_finding_details(lines, index, finding)
+
+        #detalle de lo que vio cerberus mirando el trafico
+
+        lines.append("## Observations from Cerberus Proxy")
+        lines.append("")
+
+        if not cerberus_findings:
+            lines.append("No Cerberus proxy findings were generated.")
+            lines.append("")
+        else:
+            for index, finding in enumerate(cerberus_findings, start=1):
+                append_finding_details(lines, index, finding)
 
     REPORT_FILE.write_text("\n".join(lines), encoding="utf-8")
 

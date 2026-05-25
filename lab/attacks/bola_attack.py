@@ -103,7 +103,9 @@ def run_bola_attack() -> bool:
             )
         )
 
-        return bola_confirmed and secure_blocked
+        attack_success = bola_confirmed and secure_blocked
+
+    return attack_success
 
 
 if __name__ == "__main__":

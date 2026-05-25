@@ -29,8 +29,10 @@ public class ApiClient : MonoBehaviour
     /// </summary>
     public void AddLocalCredits(int amount)
     {
-        if (amount <= 0) return;
-        Credits += amount;
+        if (amount > 0)
+        {
+            Credits += amount;
+        }
     }
 
     /// <summary>
@@ -38,14 +40,22 @@ public class ApiClient : MonoBehaviour
     /// </summary>
     public void DeductLocalCredits(int amount)
     {
-        if (amount <= 0) return;
-        Credits = Mathf.Max(0, Credits - amount);
+        if (amount > 0)
+        {
+            Credits = Mathf.Max(0, Credits - amount);
+        }
     }
 
     void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
-        Instance = this;
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+        }
+        else
+        {
+            Instance = this;
+        }
     }
 
     // ---------- AUTH ------------

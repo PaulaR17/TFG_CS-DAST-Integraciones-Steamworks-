@@ -23,9 +23,10 @@ def decode_demo_token(token: str) -> dict:
     try:
         #deshago el base64 y vuelvo a sacar el json
         raw = base64.urlsafe_b64decode(token.encode("utf-8"))
-        return json.loads(raw.decode("utf-8"))
+        payload = json.loads(raw.decode("utf-8"))
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
+    return payload
 
 
 def get_current_identity(

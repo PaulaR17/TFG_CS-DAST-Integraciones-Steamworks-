@@ -85,76 +85,61 @@ def save_finding(finding: Dict[str, Any]) -> None: #guarda un hallazgo en report
 
 
 def parse_json_request(flow: http.HTTPFlow) -> Optional[Dict[str, Any]]: #intenta leer el body de una request como json.
-   
+
+    result: Optional[Dict[str, Any]] = None
     try:
-        if not flow.request.content: #si no hay body, no es json o no es un objeto, devuelvo none.
-            return None
-
-        request_text = flow.request.get_text()
-
-        if request_text is None:
-            return None
-
-        parsed = json.loads(request_text)
-
-        if isinstance(parsed, dict):
-            return parsed
-
-        return None
-
+        #si hay body, intento decodificarlo y comprobar que es un objeto json
+        if flow.request.content:
+            request_text = flow.request.get_text()
+            if request_text is not None:
+                parsed = json.loads(request_text)
+                if isinstance(parsed, dict):
+                    result = parsed
     except Exception:
-        return None
+        result = None
+
+    return result
 
 
 def parse_json_response(flow: http.HTTPFlow) -> Optional[Dict[str, Any]]: #ntenta leer el body de una response como json.
 
     # uso para aprender cosas del login, como token y user_id.
+    result: Optional[Dict[str, Any]] = None
     try:
-        if not flow.response:
-            return None
-
-        if not flow.response.content:
-            return None
-
-        response_text = flow.response.get_text()
-
-        if response_text is None:
-            return None
-
-        parsed = json.loads(response_text)
-
-        if isinstance(parsed, dict):
-            return parsed
-
-        return None
-
+        if flow.response and flow.response.content:
+            response_text = flow.response.get_text()
+            if response_text is not None:
+                parsed = json.loads(response_text)
+                if isinstance(parsed, dict):
+                    result = parsed
     except Exception:
-        return None
+        result = None
+
+    return result
 
 
 def extract_bearer_token(flow: http.HTTPFlow) -> Optional[str]: #saca el token de la cabecera authorization.
-    
+
     # se esoera q salga algo como: authorization: bearer <token>
-  
+
     authorization = flow.request.headers.get("Authorization")
 
-    if authorization is None:
-        return None
+    token: Optional[str] = None
+    if authorization is not None and authorization.startswith("Bearer "):
+        token = authorization.replace("Bearer ", "").strip()
 
-    if not authorization.startswith("Bearer "):
-        return None
-
-    return authorization.replace("Bearer ", "").strip()
+    return token
 
 
 def extract_inventory_user_id(path: str) -> Optional[str]: #saca el user_id de /vulnerable/inventory/{user_id}.
-    
+
     match = re.match(r"^/vulnerable/inventory/([^/]+)$", path)
 
-    if not match:
-        return None
+    user_id: Optional[str] = None
+    if match:
+        user_id = match.group(1)
 
-    return match.group(1)
+    return user_id
 
 
 #hook de carga de mitmproxy
@@ -180,60 +165,59 @@ def request(flow: http.HTTPFlow) -> None:  #cada vez que mitmproxy ve una reques
 
     request_body = parse_json_request(flow)
 
-    if request_body is None:
-        return
+    #solo proceso la inspeccion si el body es un objeto json valido
+    if request_body is not None:
+        #miro si el cliente ha mandado campos que no deberia controlar
+        detected_sensitive_fields = [
+            field for field in SENSITIVE_FIELDS
+            if field in request_body
+        ]
 
-    #miro si el cliente ha mandado campos que no deberia controlar
-    detected_sensitive_fields = [
-        field for field in SENSITIVE_FIELDS
-        if field in request_body
-    ]
-
-    if detected_sensitive_fields:
-        save_finding({
-            "vulnerability": "Sensitive Client-Controlled Property",
-            "severity": "Medium",
-            "endpoint": path,
-            "owasp_category": (
-                "API3:2023 Broken Object Property Level Authorization / "
-                "API6:2023 Sensitive Business Flow"
-            ),
-            "confirmed": False,
-            "evidence": {
-                "method": method,
-                "path": path,
-                "detected_fields": detected_sensitive_fields,
-                "request_body": request_body
-            },
-            "mitigation": (
-                "Reject or ignore client-controlled sensitive fields such as "
-                "credits, is_admin, role and approved_by_client."
-            )
-        })
-
-    if path == "/vulnerable/transactions/finalize":
-        approved_by_client = request_body.get("approved_by_client")
-
-        if approved_by_client is True:
-            #si veo approved_by_client=true, marco el intento aunque aun no sepa el impacto
+        if detected_sensitive_fields:
             save_finding({
-                "vulnerability": "Client-Side Transaction Approval Attempt",
-                "severity": "High",
-                "endpoint": "/vulnerable/transactions/finalize",
+                "vulnerability": "Sensitive Client-Controlled Property",
+                "severity": "Medium",
+                "endpoint": path,
                 "owasp_category": (
-                    "API6:2023 Unrestricted Access to Sensitive Business Flows"
+                    "API3:2023 Broken Object Property Level Authorization / "
+                    "API6:2023 Sensitive Business Flow"
                 ),
                 "confirmed": False,
                 "evidence": {
                     "method": method,
                     "path": path,
+                    "detected_fields": detected_sensitive_fields,
                     "request_body": request_body
                 },
                 "mitigation": (
-                    "The backend must verify payment state server-side against "
-                    "Steam Web API or another trusted payment provider."
+                    "Reject or ignore client-controlled sensitive fields such as "
+                    "credits, is_admin, role and approved_by_client."
                 )
             })
+
+        if path == "/vulnerable/transactions/finalize":
+            approved_by_client = request_body.get("approved_by_client")
+
+            if approved_by_client is True:
+                #si veo approved_by_client=true, marco el intento aunque aun no sepa el impacto
+                save_finding({
+                    "vulnerability": "Client-Side Transaction Approval Attempt",
+                    "severity": "High",
+                    "endpoint": "/vulnerable/transactions/finalize",
+                    "owasp_category": (
+                        "API6:2023 Unrestricted Access to Sensitive Business Flows"
+                    ),
+                    "confirmed": False,
+                    "evidence": {
+                        "method": method,
+                        "path": path,
+                        "request_body": request_body
+                    },
+                    "mitigation": (
+                        "The backend must verify payment state server-side against "
+                        "Steam Web API or another trusted payment provider."
+                    )
+                })
 
 
 #hook de responses
@@ -242,75 +226,79 @@ def response(flow: http.HTTPFlow) -> None:
     method = flow.request.method
     path = flow.request.path
 
-    if not flow.response:
-        return
+    #si no hay response, no hay nada que aprender ni confirmar
+    if flow.response:
+        status_code = flow.response.status_code
 
-    status_code = flow.response.status_code
+        print(f"[CERBERUS RESPONSE] {method} {path} -> {status_code}")
 
-    print(f"[CERBERUS RESPONSE] {method} {path} -> {status_code}")
+        #aprendo token -> user_id leyendo la respuesta del login.
+        #observo los dos endpoints de login que usa el laboratorio:
+        # - /auth/login : login clasico con ticket sintetico (suite de ataques)
+        # - /auth/steam_login : login para el cliente Unity con Steamworks.NET
+        #si solo escuchara /auth/login, cerberus no sabria correlacionar el trafico
+        #del cliente Unity y perderia toda la deteccion stateful durante una partida real.
+        is_login = (
+            method == "POST"
+            and path in ("/auth/login", "/auth/steam_login")
+            and status_code == 200
+        )
 
-    #aprendo token -> user_id leyendo la respuesta del login.
-    #observo los dos endpoints de login que usa el laboratorio:
-    # - /auth/login : login clasico con ticket sintetico (suite de ataques)
-    # - /auth/steam_login : login para el cliente Unity con Steamworks.NET
-    #si solo escuchara /auth/login, cerberus no sabria correlacionar el trafico
-    #del cliente Unity y perderia toda la deteccion stateful durante una partida real.
-    if method == "POST" and path in ("/auth/login", "/auth/steam_login") and status_code == 200:
-        response_body = parse_json_response(flow)
+        if is_login:
+            response_body = parse_json_response(flow)
 
-        if response_body is None:
-            return
+            #aprendo la relacion token -> user solo si el body trae los dos campos
+            if response_body is not None:
+                access_token = response_body.get("access_token")
+                user_id = response_body.get("user_id")
+                username = response_body.get("username")
 
-        access_token = response_body.get("access_token")
-        user_id = response_body.get("user_id")
-        username = response_body.get("username")
+                if isinstance(access_token, str) and isinstance(user_id, str):
+                    TOKEN_TO_USER_ID[access_token] = user_id
+                    TOKEN_TO_USERNAME[access_token] = username if isinstance(username, str) else "unknown"
 
-        if isinstance(access_token, str) and isinstance(user_id, str):
-            TOKEN_TO_USER_ID[access_token] = user_id
-            TOKEN_TO_USERNAME[access_token] = username if isinstance(username, str) else "unknown"
-
-            print(
-                f"[CERBERUS] Learned authenticated session ({path}): "
-                f"user_id={user_id}, username={username}"
+                    print(
+                        f"[CERBERUS] Learned authenticated session ({path}): "
+                        f"user_id={user_id}, username={username}"
+                    )
+        else:
+            #confirmo bola si alguien pide un inventario ajeno y el backend responde 200
+            requested_user_id = extract_inventory_user_id(path)
+            is_inventory_get = (
+                method == "GET"
+                and requested_user_id
+                and status_code == 200
             )
 
-        return
+            if is_inventory_get:
+                token = extract_bearer_token(flow)
 
-    #confirmo bola si alguien pide un inventario ajeno y el backend responde 200
-    requested_user_id = extract_inventory_user_id(path)
+                if token is None:
+                    print("[CERBERUS] Inventory request without Bearer token.")
+                else:
+                    authenticated_user_id = TOKEN_TO_USER_ID.get(token)
 
-    if method == "GET" and requested_user_id and status_code == 200:
-        token = extract_bearer_token(flow)
-
-        if token is None:
-            print("[CERBERUS] Inventory request without Bearer token.")
-            return
-
-        authenticated_user_id = TOKEN_TO_USER_ID.get(token)
-
-        if authenticated_user_id is None:
-            print(
-                "[CERBERUS] Inventory request observed, but token is unknown. "
-                "Cannot correlate BOLA state."
-            )
-            return
-
-        if authenticated_user_id != requested_user_id:
-            save_finding({
-                "vulnerability": "Broken Object Level Authorization (BOLA)",
-                "severity": "High",
-                "endpoint": "/vulnerable/inventory/{user_id}",
-                "owasp_category": "API1:2023 Broken Object Level Authorization",
-                "confirmed": True,
-                "evidence": {
-                    "method": method,
-                    "path": path,
-                    "status_code": status_code,
-                    "authenticated_user_id": authenticated_user_id,
-                    "requested_user_id": requested_user_id
-                },
-                "mitigation": (
-                    "Validate that the requested user_id matches the authenticated "
-                    "user_id before returning inventory resources."
-                )
-            })
+                    if authenticated_user_id is None:
+                        print(
+                            "[CERBERUS] Inventory request observed, but token is unknown. "
+                            "Cannot correlate BOLA state."
+                        )
+                    elif authenticated_user_id != requested_user_id:
+                        save_finding({
+                            "vulnerability": "Broken Object Level Authorization (BOLA)",
+                            "severity": "High",
+                            "endpoint": "/vulnerable/inventory/{user_id}",
+                            "owasp_category": "API1:2023 Broken Object Level Authorization",
+                            "confirmed": True,
+                            "evidence": {
+                                "method": method,
+                                "path": path,
+                                "status_code": status_code,
+                                "authenticated_user_id": authenticated_user_id,
+                                "requested_user_id": requested_user_id
+                            },
+                            "mitigation": (
+                                "Validate that the requested user_id matches the authenticated "
+                                "user_id before returning inventory resources."
+                            )
+                        })

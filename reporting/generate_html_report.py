@@ -74,8 +74,10 @@ def status_of(f: dict[str, Any]) -> str:
     field; older payloads use ``status``. We handle all three cases.
     """
     if "confirmed" in f:
-        return "confirmed" if f["confirmed"] else "observed"
-    return str(f.get("status", "observed")).lower()
+        label = "confirmed" if f["confirmed"] else "observed"
+    else:
+        label = str(f.get("status", "observed")).lower()
+    return label
 
 
 def stats(findings: list[dict[str, Any]]) -> dict[str, Counter]:
@@ -91,9 +93,10 @@ def stats(findings: list[dict[str, Any]]) -> dict[str, Counter]:
 
 def fmt_evidence(evidence: Any) -> str:
     try:
-        return escape(json.dumps(evidence, indent=2, ensure_ascii=False))
+        formatted = escape(json.dumps(evidence, indent=2, ensure_ascii=False))
     except Exception:
-        return escape(str(evidence))
+        formatted = escape(str(evidence))
+    return formatted
 
 
 def render_row(idx: int, f: dict[str, Any]) -> str:
@@ -583,12 +586,12 @@ def main() -> None:
     if not findings:
         print(f"[!] No findings under {REPORTS_DIR}")
         print("    Run the suite (python lab/attacks/run_all_attacks.py) and try again.")
-        return
-    html = build_html(findings)
-    OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT_FILE.write_text(html, encoding="utf-8")
-    print(f"[OK] HTML report written: {OUTPUT_FILE}")
-    print(f"     {len(findings)} findings total — open the file and Ctrl+P for PDF.")
+    else:
+        html = build_html(findings)
+        OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
+        OUTPUT_FILE.write_text(html, encoding="utf-8")
+        print(f"[OK] HTML report written: {OUTPUT_FILE}")
+        print(f"     {len(findings)} findings total — open the file and Ctrl+P for PDF.")
 
 
 if __name__ == "__main__":

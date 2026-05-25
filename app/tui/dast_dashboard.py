@@ -91,8 +91,10 @@ SEVERITY_STYLE = {
 # ----------------------------------------------------------------------------
 def status_of(d: dict) -> str:
     if "confirmed" in d:
-        return "confirmed" if d["confirmed"] else "observed"
-    return str(d.get("status", "observed")).lower()
+        label = "confirmed" if d["confirmed"] else "observed"
+    else:
+        label = str(d.get("status", "observed")).lower()
+    return label
 
 
 def _title(text: str, color: str = ACCENT) -> str:
@@ -162,25 +164,24 @@ class SeverityBars(Static):
     def render(self):
         order = ["Critical", "High", "Medium", "Low", "Info"]
         if not self.counts:
-            return "\n".join([
+            lines = [
                 _title("SEVERITY"),
                 "",
                 f"  [dim {INK_DIM}]No findings yet.[/]",
                 f"  [dim {INK_DIM}]Press [bold {ACCENT_ALT}]1-5[/] to run an attack.[/]",
-            ])
-
-        max_v = max(self.counts.values()) or 1
-        lines = [_title("SEVERITY"), ""]
-        for sev in order:
-            v = self.counts.get(sev, 0)
-            if v == 0:
-                continue
-            color = SEVERITY_STYLE.get(sev, INK)
-            bar_len = max(1, int((v / max_v) * 22))
-            bar = "█" * bar_len + "·" * (22 - bar_len)
-            lines.append(
-                f"  [{color}]{sev:<8}[/] [{color}]{bar}[/]  [bold {INK}]{v}[/]"
-            )
+            ]
+        else:
+            max_v = max(self.counts.values()) or 1
+            lines = [_title("SEVERITY"), ""]
+            for sev in order:
+                v = self.counts.get(sev, 0)
+                if v != 0:
+                    color = SEVERITY_STYLE.get(sev, INK)
+                    bar_len = max(1, int((v / max_v) * 22))
+                    bar = "█" * bar_len + "·" * (22 - bar_len)
+                    lines.append(
+                        f"  [{color}]{sev:<8}[/] [{color}]{bar}[/]  [bold {INK}]{v}[/]"
+                    )
         return "\n".join(lines)
 
 
@@ -411,6 +412,7 @@ class DASTDashboard(App):
 
     def refresh_findings(self) -> None:
         rows: list[tuple[str, dict]] = []
+        load_failed = False
         try:
             if FINDINGS_FILE.exists():
                 with open(FINDINGS_FILE, "r", encoding="utf-8") as f:
@@ -428,56 +430,57 @@ class DASTDashboard(App):
                             pass
         except Exception as e:
             self._log("ERROR", f"refresh_findings: {e}")
-            return
+            load_failed = True
 
-        total = len(rows)
-        confirmed = sum(1 for _, d in rows if status_of(d) == "confirmed")
-        critical = sum(1 for _, d in rows if d.get("severity") == "Critical")
-        high = sum(1 for _, d in rows if d.get("severity") == "High")
-        sev_counts: dict[str, int] = {}
-        for _, d in rows:
-            sev = d.get("severity", "Info")
-            sev_counts[sev] = sev_counts.get(sev, 0) + 1
+        if not load_failed:
+            total = len(rows)
+            confirmed = sum(1 for _, d in rows if status_of(d) == "confirmed")
+            critical = sum(1 for _, d in rows if d.get("severity") == "Critical")
+            high = sum(1 for _, d in rows if d.get("severity") == "High")
+            sev_counts: dict[str, int] = {}
+            for _, d in rows:
+                sev = d.get("severity", "Info")
+                sev_counts[sev] = sev_counts.get(sev, 0) + 1
 
-        self.stats_panel.total = total
-        self.stats_panel.confirmed = confirmed
-        self.stats_panel.observed = total - confirmed
-        self.stats_panel.critical = critical
-        self.stats_panel.high = high
-        self.severity_panel.counts = sev_counts
+            self.stats_panel.total = total
+            self.stats_panel.confirmed = confirmed
+            self.stats_panel.observed = total - confirmed
+            self.stats_panel.critical = critical
+            self.stats_panel.high = high
+            self.severity_panel.counts = sev_counts
 
-        self.table.clear()
-        for i, (source, d) in enumerate(rows[-30:], 1):
-            sev = d.get("severity", "?")
-            sev_text = Text(sev, style=SEVERITY_STYLE.get(sev, INK))
+            self.table.clear()
+            for i, (source, d) in enumerate(rows[-30:], 1):
+                sev = d.get("severity", "?")
+                sev_text = Text(sev, style=SEVERITY_STYLE.get(sev, INK))
 
-            st = status_of(d)
-            st_color = ERR if st == "confirmed" else WARN
-            st_text = Text(st.upper(), style=f"bold {st_color}")
+                st = status_of(d)
+                st_color = ERR if st == "confirmed" else WARN
+                st_text = Text(st.upper(), style=f"bold {st_color}")
 
-            ts_raw = d.get("timestamp", "")
-            ts = ts_raw[11:19] if "T" in ts_raw else (ts_raw[-8:] or self._now())
+                ts_raw = d.get("timestamp", "")
+                ts = ts_raw[11:19] if "T" in ts_raw else (ts_raw[-8:] or self._now())
 
-            vuln = (d.get("vulnerability") or "?")[:40]
+                vuln = (d.get("vulnerability") or "?")[:40]
 
-            self.table.add_row(str(i), ts, source, vuln, sev_text, st_text)
+                self.table.add_row(str(i), ts, source, vuln, sev_text, st_text)
 
     def action_run_attack(self, script: str) -> None:
         path = ATTACKS_DIR / script
         if not path.exists():
             self._log("ERROR", f"Script not found: {script}")
-            return
-        self._log("INFO", f"Launching [bold]{script}[/]")
-        try:
-            subprocess.Popen(
-                [sys.executable, str(path)],
-                cwd=str(ATTACKS_DIR.parent),
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-            self._log("OK", f"{script} running in background")
-        except Exception as e:
-            self._log("ERROR", str(e))
+        else:
+            self._log("INFO", f"Launching [bold]{script}[/]")
+            try:
+                subprocess.Popen(
+                    [sys.executable, str(path)],
+                    cwd=str(ATTACKS_DIR.parent),
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+                self._log("OK", f"{script} running in background")
+            except Exception as e:
+                self._log("ERROR", str(e))
 
     def action_reset_db(self) -> None:
         cmd = [
@@ -498,19 +501,19 @@ class DASTDashboard(App):
     def action_generate_report(self) -> None:
         if not REPORTING_SCRIPT.exists():
             self._log("ERROR", f"Reporting script not found: {REPORTING_SCRIPT}")
-            return
-        self._log("INFO", "Generating HTML report...")
-        try:
-            r = subprocess.run(
-                [sys.executable, str(REPORTING_SCRIPT)],
-                capture_output=True, text=True, timeout=20,
-            )
-            if r.returncode == 0:
-                self._log("OK", "HTML report written to lab/reports/audit_report.html")
-            else:
-                self._log("ERROR", f"generate_report: {r.stderr.strip()}")
-        except Exception as e:
-            self._log("ERROR", str(e))
+        else:
+            self._log("INFO", "Generating HTML report...")
+            try:
+                r = subprocess.run(
+                    [sys.executable, str(REPORTING_SCRIPT)],
+                    capture_output=True, text=True, timeout=20,
+                )
+                if r.returncode == 0:
+                    self._log("OK", "HTML report written to lab/reports/audit_report.html")
+                else:
+                    self._log("ERROR", f"generate_report: {r.stderr.strip()}")
+            except Exception as e:
+                self._log("ERROR", str(e))
 
     def action_open_mitmweb(self) -> None:
         webbrowser.open(PROXY_URL)
@@ -522,10 +525,12 @@ class DASTDashboard(App):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         key = event.button.id.split("-")[-1]
-        for k, _, _, script in ATTACKS:
-            if k == key:
-                self.action_run_attack(script)
-                return
+        target_script = next(
+            (script for k, _, _, script in ATTACKS if k == key),
+            None,
+        )
+        if target_script is not None:
+            self.action_run_attack(target_script)
 
 
 if __name__ == "__main__":

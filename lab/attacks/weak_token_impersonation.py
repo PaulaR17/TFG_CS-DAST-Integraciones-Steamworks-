@@ -94,7 +94,9 @@ def run_weak_token_impersonation_attack() -> bool:
             )
         )
 
-        return impersonation_confirmed
+        attack_success = impersonation_confirmed
+
+    return attack_success
 
 
 if __name__ == "__main__":
