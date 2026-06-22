@@ -39,8 +39,11 @@ steam_appid.txt
 # Archivos de crash
 sysinfo.txt
 crashlytics-build.properties
-# === Python (.venv del backend) ===
+# === Python (entornos virtuales y cache) ===
 .venv/
+.venv-win/
+.venv*/
+venv/
 **/__pycache__/
 *.pyc
 
